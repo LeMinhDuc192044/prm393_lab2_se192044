@@ -1,0 +1,10 @@
+{
+  "version": "0.2.1",
+  "tasks": [
+    {
+      "taskLabel": "task-prm393_lab2_se192044",
+      "appliesTo": "/",
+      "type": "launch"
+    }
+  ]
+}
