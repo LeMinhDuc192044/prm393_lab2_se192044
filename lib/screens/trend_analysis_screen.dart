@@ -6,6 +6,7 @@ import '../theme.dart';
 import '../widgets/common_widgets.dart';
 import 'publication_detail_screen.dart';
 
+
 class TrendAnalysisScreen extends StatelessWidget {
   const TrendAnalysisScreen({super.key});
 
