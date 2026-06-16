@@ -6,6 +6,7 @@ import '../theme.dart';
 import '../widgets/common_widgets.dart';
 import 'publication_detail_screen.dart';
 
+
 class TrendAnalysisScreen extends StatelessWidget {
   const TrendAnalysisScreen({super.key});
 
@@ -572,7 +573,7 @@ class _TopAuthorsTab extends StatelessWidget {
                             height: 28,
                             decoration: BoxDecoration(
                               color: i < 3
-                                  ? color.withOpacity(0.15)
+                                  ? color.withValues(alpha:0.15)
                                   : AppTheme.background,
                               borderRadius: BorderRadius.circular(6),
                             ),
@@ -593,7 +594,7 @@ class _TopAuthorsTab extends StatelessWidget {
                           // Avatar
                           CircleAvatar(
                             radius: 16,
-                            backgroundColor: color.withOpacity(0.15),
+                            backgroundColor: color.withValues(alpha: 0.15),
                             child: Text(
                               entry.key.isNotEmpty
                                   ? entry.key[0].toUpperCase()
