@@ -1,0 +1,35 @@
+language: en
+
+reviews:
+  profile: assertive
+
+path_instructions:
+  - path: "lib/models/**"
+    instructions: >
+      Check model serialization, null safety,
+      JSON parsing, and type safety.
+
+  - path: "lib/services/**"
+    instructions: >
+      Review API integration with OpenAlex,
+      error handling, timeout handling,
+      exception management, and async code.
+
+  - path: "lib/screens/**"
+    instructions: >
+      Review Flutter UI performance,
+      widget rebuilds, loading states,
+      and navigation patterns.
+
+  - path: "lib/providers/**"
+    instructions: >
+      Review state management,
+      separation of concerns,
+      and business logic placement.
+
+  - path: "lib/widgets/**"
+    instructions: >
+      Review reusability and Flutter best practices.
+
+chat:
+  auto_reply: true
