@@ -109,13 +109,13 @@ class _SearchScreenState extends State<SearchScreen> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: 'Search research topics...',
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
+                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
                     prefixIcon: const Icon(Icons.search, color: Colors.white70),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.15),
+                    fillColor: Colors.white.withValues(alpha: 0.15),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -159,7 +159,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
                 ),
                 backgroundColor: Colors.blue.shade700,
-                side: BorderSide(color: Colors.white.withOpacity(0.5)),
+                side: BorderSide(color: Colors.white.withValues(alpha: .5)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),

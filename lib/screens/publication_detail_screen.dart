@@ -69,7 +69,7 @@ class PublicationDetailScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppTheme.accent.withOpacity(0.1),
+                color: AppTheme.accent.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -161,7 +161,7 @@ class PublicationDetailScreen extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 18),

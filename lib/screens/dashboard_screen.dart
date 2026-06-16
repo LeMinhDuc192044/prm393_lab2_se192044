@@ -137,7 +137,7 @@ class _OverviewHeader extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha:0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.dashboard_outlined,
@@ -151,7 +151,7 @@ class _OverviewHeader extends StatelessWidget {
                     Text(
                       'Research Dashboard',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 8.0),
                             fontWeight: FontWeight.w500,
                           ),
                     ),
@@ -205,7 +205,7 @@ class _OverviewHeader extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha:0.7),
               fontSize: 11,
             ),
           ),
@@ -289,7 +289,7 @@ class _HighlightPaperCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B).withOpacity(0.12),
+                      color: const Color(0xFFF59E0B).withValues(alpha:0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(

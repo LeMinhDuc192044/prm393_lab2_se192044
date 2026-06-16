@@ -57,7 +57,7 @@ class PublicationCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: rank! <= 3
                         ? AppTheme.primary
-                        : AppTheme.primary.withOpacity(0.1),
+                        : AppTheme.primary.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
@@ -165,7 +165,7 @@ class StatCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: c.withOpacity(0.1),
+                color: c.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: c, size: 20),
@@ -239,10 +239,10 @@ class EmptyState extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withOpacity(0.08),
+                  color: AppTheme.primary.withValues(alpha:0.08),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 36, color: AppTheme.primary.withOpacity(0.6)),
+                child: Icon(icon, size: 36, color: AppTheme.primary.withValues(alpha:0.6)),
               ),
               const SizedBox(height: 20),
               Text(title, style: Theme.of(context).textTheme.headlineMedium),

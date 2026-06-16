@@ -117,7 +117,7 @@ class AppTheme {
         ),
         chipTheme: ChipThemeData(
           backgroundColor: background,
-          selectedColor: primary.withOpacity(0.15),
+          selectedColor: primary.withValues(alpha: 0.15),
           side: const BorderSide(color: divider),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
