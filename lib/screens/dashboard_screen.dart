@@ -229,39 +229,45 @@ class _MetricsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.6,
-      children: [
-        StatCard(
-          label: 'Total Publications',
-          value: '${summary.totalPublications}',
-          icon: Icons.article_outlined,
-          color: AppTheme.primary,
-        ),
-        StatCard(
-          label: 'Avg Citations',
-          value: summary.avgCitations.toStringAsFixed(1),
-          icon: Icons.format_quote_outlined,
-          color: AppTheme.accent,
-        ),
-        StatCard(
-          label: 'Most Active Year',
-          value: summary.mostActiveYear > 0 ? '${summary.mostActiveYear}' : 'N/A',
-          icon: Icons.calendar_today_outlined,
-          color: const Color(0xFFF59E0B),
-        ),
-        StatCard(
-          label: 'Top Journal',
-          value: summary.topJournal,
-          icon: Icons.library_books_outlined,
-          color: const Color(0xFF8B5CF6),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 700;
+        return GridView.count(
+          crossAxisCount: wide ? 4 : 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: wide ? 1.25 : 1.05,
+          children: [
+            StatCard(
+              label: 'Total Publications',
+              value: '${summary.totalPublications}',
+              icon: Icons.article_outlined,
+              color: AppTheme.primary,
+            ),
+            StatCard(
+              label: 'Avg Citations',
+              value: summary.avgCitations.toStringAsFixed(1),
+              icon: Icons.format_quote_outlined,
+              color: AppTheme.accent,
+            ),
+            StatCard(
+              label: 'Most Active Year',
+              value:
+                  summary.mostActiveYear > 0 ? '${summary.mostActiveYear}' : 'N/A',
+              icon: Icons.calendar_today_outlined,
+              color: const Color(0xFFF59E0B),
+            ),
+            StatCard(
+              label: 'Top Journal',
+              value: summary.topJournal,
+              icon: Icons.library_books_outlined,
+              color: const Color(0xFF8B5CF6),
+            ),
+          ],
+        );
+      },
     );
   }
 }

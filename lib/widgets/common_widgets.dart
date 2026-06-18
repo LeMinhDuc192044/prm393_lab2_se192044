@@ -175,11 +175,24 @@ class StatCard extends StatelessWidget {
                 style: Theme.of(context)
                     .textTheme
                     .titleLarge
-                    ?.copyWith(color: c, fontWeight: FontWeight.w700),
-                maxLines: 2,
+                    ?.copyWith(color: c, fontWeight: FontWeight.w700, height: 1.1),
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 4),
-            Text(label, style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: 6),
+            Expanded(
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 12,
+                        height: 1.2,
+                      ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
           ],
         ),
       ),

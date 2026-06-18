@@ -78,6 +78,14 @@ class _PublicationsByYearTab extends StatelessWidget {
 
   Widget _chartCard(BuildContext context, Map<int, int> byYear,
       List<int> years, double maxCount) {
+    final labelStep = years.length <= 8
+        ? 1
+        : years.length <= 16
+            ? 2
+            : years.length <= 24
+                ? 4
+                : 6;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -134,19 +142,23 @@ class _PublicationsByYearTab extends StatelessWidget {
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 28,
-                        interval: years.length > 15 ? 3 : 1,
+                        reservedSize: 34,
+                        interval: 1,
                         getTitlesWidget: (v, _) {
                           final idx = v.toInt();
                           if (idx < 0 || idx >= years.length) {
                             return const SizedBox();
+                          }
+                          final isEdge = idx == 0 || idx == years.length - 1;
+                          if (!isEdge && idx % labelStep != 0) {
+                            return const SizedBox.shrink();
                           }
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
                               '${years[idx]}',
                               style: const TextStyle(
-                                  fontSize: 9,
+                                  fontSize: 8,
                                   color: AppTheme.textSecondary),
                             ),
                           );
