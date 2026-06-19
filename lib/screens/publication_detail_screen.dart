@@ -74,7 +74,7 @@ class PublicationDetailScreen extends StatelessWidget {
               ),
               child: Text(
                 publication.journalName ?? 'Unknown Journal',
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppTheme.accent,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,

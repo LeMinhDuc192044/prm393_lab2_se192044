@@ -89,6 +89,7 @@ class AppTheme {
           ),
           margin: EdgeInsets.zero,
         ),
+
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: surface,
@@ -120,6 +121,27 @@ class AppTheme {
           selectedColor: primary.withValues(alpha: 0.15),
           side: const BorderSide(color: divider),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: primary, // ← CHANGE THIS to set the bar's background color
+          indicatorColor: Colors.white.withValues(alpha: 0.18), // pill behind selected icon
+          elevation: 2,
+          height: 64,
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            final selected = states.contains(WidgetState.selected);
+            return GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              color: selected ? Colors.white : Colors.white.withValues(alpha: 0.65),
+            );
+          }),
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            final selected = states.contains(WidgetState.selected);
+            return IconThemeData(
+              color: selected ? Colors.white : Colors.white.withValues(alpha: 0.65),
+              size: 24,
+            );
+          }),
         ),
       );
 }
