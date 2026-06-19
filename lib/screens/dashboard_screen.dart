@@ -66,6 +66,7 @@ class DashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: _HighlightCard(
@@ -137,7 +138,7 @@ class _OverviewHeader extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha:0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.dashboard_outlined,
@@ -151,7 +152,7 @@ class _OverviewHeader extends StatelessWidget {
                     Text(
                       'Research Dashboard',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 8.0),
+                            color: Colors.white.withValues(alpha: 0.8),
                             fontWeight: FontWeight.w500,
                           ),
                     ),
@@ -205,7 +206,7 @@ class _OverviewHeader extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: Colors.white.withValues(alpha:0.7),
+              color: Colors.white.withValues(alpha: 0.7),
               fontSize: 11,
             ),
           ),
@@ -217,11 +218,13 @@ class _OverviewHeader extends StatelessWidget {
   Widget _divider() => Container(
         width: 1,
         height: 36,
-        color: Colors.white.withOpacity(0.25),
+        color: Colors.white.withValues(alpha: 0.25),
       );
 }
 
 // ── Key Metrics grid ──────────────────────────────────────────────────────────
+// Replaced GridView.count (fixed aspect ratio -> overflow) with Row+Column
+// of intrinsic-height tiles, same pattern used in publication_detail_screen.
 class _MetricsGrid extends StatelessWidget {
   final DashboardSummary summary;
 
@@ -229,39 +232,101 @@ class _MetricsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.6,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        StatCard(
-          label: 'Total Publications',
-          value: '${summary.totalPublications}',
-          icon: Icons.article_outlined,
-          color: AppTheme.primary,
+        Expanded(
+          child: Column(
+            children: [
+              _metricTile(
+                icon: Icons.article_outlined,
+                label: 'Total Publications',
+                value: '${summary.totalPublications}',
+                color: AppTheme.primary,
+              ),
+              const SizedBox(height: 12),
+              _metricTile(
+                icon: Icons.calendar_today_outlined,
+                label: 'Most Active Year',
+                value: summary.mostActiveYear > 0
+                    ? '${summary.mostActiveYear}'
+                    : 'N/A',
+                color: const Color(0xFFF59E0B),
+              ),
+            ],
+          ),
         ),
-        StatCard(
-          label: 'Avg Citations',
-          value: summary.avgCitations.toStringAsFixed(1),
-          icon: Icons.format_quote_outlined,
-          color: AppTheme.accent,
-        ),
-        StatCard(
-          label: 'Most Active Year',
-          value: summary.mostActiveYear > 0 ? '${summary.mostActiveYear}' : 'N/A',
-          icon: Icons.calendar_today_outlined,
-          color: const Color(0xFFF59E0B),
-        ),
-        StatCard(
-          label: 'Top Journal',
-          value: summary.topJournal,
-          icon: Icons.library_books_outlined,
-          color: const Color(0xFF8B5CF6),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            children: [
+              _metricTile(
+                icon: Icons.format_quote_outlined,
+                label: 'Avg Citations',
+                value: summary.avgCitations.toStringAsFixed(1),
+                color: AppTheme.accent,
+              ),
+              const SizedBox(height: 12),
+              _metricTile(
+                icon: Icons.library_books_outlined,
+                label: 'Top Journal',
+                value: summary.topJournal,
+                color: const Color(0xFF8B5CF6),
+              ),
+            ],
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _metricTile({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -289,12 +354,12 @@ class _HighlightPaperCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B).withValues(alpha:0.12),
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         Icon(Icons.emoji_events_outlined,
                             size: 14, color: Color(0xFFF59E0B)),
                         SizedBox(width: 4),
@@ -313,7 +378,7 @@ class _HighlightPaperCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppTheme.primary.withOpacity(0.08),
+                      color: AppTheme.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
@@ -424,12 +489,13 @@ class _HighlightCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: color, size: 18),
@@ -489,7 +555,7 @@ class _TopAuthorsCard extends StatelessWidget {
                           height: 24,
                           decoration: BoxDecoration(
                             color: i < 3
-                                ? color.withOpacity(0.15)
+                                ? color.withValues(alpha: 0.15)
                                 : AppTheme.background,
                             borderRadius: BorderRadius.circular(6),
                           ),
@@ -556,7 +622,7 @@ class _QuickInsightCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: AppTheme.primary.withOpacity(0.04),
+      color: AppTheme.primary.withValues(alpha: 0.04),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(

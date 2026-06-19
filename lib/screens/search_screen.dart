@@ -48,49 +48,59 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Journal Trend Analyzer'),
-        actions: [
-          Consumer<SearchProvider>(
-            builder: (_, provider, __) {
-              if (!provider.hasData) return const SizedBox.shrink();
-              return Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.bar_chart),
-                    tooltip: 'Trend Analysis',
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChangeNotifierProvider.value(
-                          value: provider,
-                          child: const TrendAnalysisScreen(),
-                        ),
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.dashboard),
-                    tooltip: 'Dashboard',
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChangeNotifierProvider.value(
-                          value: provider,
-                          child: const DashboardScreen(),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
           _buildSearchHeader(),
           Expanded(child: _buildBody()),
         ],
+      ),
+      bottomNavigationBar: Consumer<SearchProvider>(
+        builder: (_, provider, __) {
+          return NavigationBar(
+            selectedIndex: 0,
+            onDestinationSelected: (index) {
+              if (index == 1) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChangeNotifierProvider.value(
+                      value: provider,
+                      child: const TrendAnalysisScreen(),
+                    ),
+                  ),
+                );
+              } else if (index == 2) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChangeNotifierProvider.value(
+                      value: provider,
+                      child: const DashboardScreen(),
+                    ),
+                  ),
+                );
+              }
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.search_outlined),
+                selectedIcon: Icon(Icons.search),
+                label: 'Search',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.bar_chart_outlined),
+                selectedIcon: Icon(Icons.bar_chart),
+                label: 'Trends',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.dashboard_outlined),
+                selectedIcon: Icon(Icons.dashboard),
+                label: 'Dashboard',
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -126,7 +136,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   onSubmitted: _search,
                   textInputAction: TextInputAction.search,
                 ),
-              ),
+              ),  
               const SizedBox(width: 12),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -249,33 +259,7 @@ class _SearchScreenState extends State<SearchScreen> {
               '${provider.publications.length} publications for "${provider.query}"',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
-          ),
-          TextButton.icon(
-            icon: const Icon(Icons.dashboard_outlined, size: 16),
-            label: const Text('Dashboard'),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ChangeNotifierProvider.value(
-                  value: provider,
-                  child: const DashboardScreen(),
-                ),
-              ),
-            ),
-          ),
-          TextButton.icon(
-            icon: const Icon(Icons.bar_chart_outlined, size: 16),
-            label: const Text('Trends'),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ChangeNotifierProvider.value(
-                  value: provider,
-                  child: const TrendAnalysisScreen(),
-                ),
-              ),
-            ),
-          ),
+          )
         ],
       ),
     );
