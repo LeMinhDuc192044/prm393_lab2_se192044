@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/search_provider.dart';
-import 'screens/search_screen.dart';
+import 'screens/home_screen.dart';
 import 'theme.dart';
 
 void main() {
-  runApp(const JournalTrendApp());
+  runApp(const JournalTrendAnalyzerApp());
 }
 
-class JournalTrendApp extends StatelessWidget {
-  const JournalTrendApp({super.key});
+class JournalTrendAnalyzerApp extends StatelessWidget {
+  const JournalTrendAnalyzerApp({super.key});
 
   @override
-  Widget build(BuildContext context) {  
+  Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => SearchProvider(),
+      create: (_) => SearchProvider(),  
       child: MaterialApp(
         title: 'Journal Trend Analyzer',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.theme,
-        home: const SearchScreen(),
+        home: const HomeScreen(),
       ),
     );
   }

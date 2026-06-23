@@ -13,14 +13,27 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<SearchProvider>();
-    final summary = provider.dashboardSummary;
-    final topAuthors = provider.topAuthors;
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Dashboard: ${provider.query}'),
       ),
-      body: SingleChildScrollView(
+      body: const DashboardBody(),
+    );
+  }
+}
+
+/// Body-only version of the dashboard content, reusable without a
+/// Scaffold/AppBar. Used standalone above and embedded in HomeScreen.
+class DashboardBody extends StatelessWidget {
+  const DashboardBody({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<SearchProvider>();
+    final summary = provider.dashboardSummary;
+    final topAuthors = provider.topAuthors;
+
+    return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,12 +118,10 @@ class DashboardScreen extends StatelessWidget {
             const SizedBox(height: 32),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 
-// ── Overview header banner ────────────────────────────────────────────────────
 class _OverviewHeader extends StatelessWidget {
   final String query;
   final DashboardSummary summary;
@@ -357,9 +368,9 @@ class _HighlightPaperCard extends StatelessWidget {
                       color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
+                      children: const [
                         Icon(Icons.emoji_events_outlined,
                             size: 14, color: Color(0xFFF59E0B)),
                         SizedBox(width: 4),

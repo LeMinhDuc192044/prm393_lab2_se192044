@@ -6,7 +6,6 @@ import '../theme.dart';
 import '../widgets/common_widgets.dart';
 import 'publication_detail_screen.dart';
 
-
 class TrendAnalysisScreen extends StatelessWidget {
   const TrendAnalysisScreen({super.key});
 
@@ -31,15 +30,26 @@ class TrendAnalysisScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
-          children: [
-            _PublicationsByYearTab(),
-            _TopJournalsTab(),
-            _TopPapersTab(),
-            _TopAuthorsTab(),
-          ],
-        ),
+        body: const TrendAnalysisBody(),
       ),
+    );
+  }
+}
+
+/// Body-only version of the trend tabs, reusable without a Scaffold/AppBar.
+/// Used standalone above (with its own AppBar) and embedded in HomeScreen.
+class TrendAnalysisBody extends StatelessWidget {
+  const TrendAnalysisBody({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const TabBarView(
+      children: [
+        _PublicationsByYearTab(),
+        _TopJournalsTab(),
+        _TopPapersTab(),
+        _TopAuthorsTab(),
+      ],
     );
   }
 }
@@ -55,14 +65,11 @@ class _PublicationsByYearTab extends StatelessWidget {
 
     if (byYear.isEmpty) {
       return const EmptyState(
-          icon: Icons.bar_chart,
-          title: 'No Data',
-          subtitle: 'No year data available.');
+          icon: Icons.bar_chart, title: 'No Data', subtitle: 'No year data available.');
     }
 
     final years = byYear.keys.toList();
-    final maxCount =
-        byYear.values.reduce((a, b) => a > b ? a : b).toDouble();
+    final maxCount = byYear.values.reduce((a, b) => a > b ? a : b).toDouble();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -76,8 +83,7 @@ class _PublicationsByYearTab extends StatelessWidget {
     );
   }
 
-  Widget _chartCard(BuildContext context, Map<int, int> byYear,
-      List<int> years, double maxCount) {
+  Widget _chartCard(BuildContext context, Map<int, int> byYear, List<int> years, double maxCount) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -104,8 +110,7 @@ class _PublicationsByYearTab extends StatelessWidget {
                           toY: count,
                           width: years.length > 20 ? 6 : 14,
                           color: AppTheme.primary,
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(4)),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                         ),
                       ],
                     );
@@ -126,8 +131,7 @@ class _PublicationsByYearTab extends StatelessWidget {
                         reservedSize: 40,
                         getTitlesWidget: (v, _) => Text(
                           '${v.toInt()}',
-                          style: const TextStyle(
-                              fontSize: 10, color: AppTheme.textSecondary),
+                          style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
                         ),
                       ),
                     ),
@@ -138,25 +142,19 @@ class _PublicationsByYearTab extends StatelessWidget {
                         interval: years.length > 15 ? 3 : 1,
                         getTitlesWidget: (v, _) {
                           final idx = v.toInt();
-                          if (idx < 0 || idx >= years.length) {
-                            return const SizedBox();
-                          }
+                          if (idx < 0 || idx >= years.length) return const SizedBox();
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
                               '${years[idx]}',
-                              style: const TextStyle(
-                                  fontSize: 9,
-                                  color: AppTheme.textSecondary),
+                              style: const TextStyle(fontSize: 9, color: AppTheme.textSecondary),
                             ),
                           );
                         },
                       ),
                     ),
-                    topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
                   barTouchData: BarTouchData(
                     touchTooltipData: BarTouchTooltipData(
@@ -178,10 +176,8 @@ class _PublicationsByYearTab extends StatelessWidget {
     );
   }
 
-  Widget _trendInsights(
-      BuildContext context, Map<int, int> byYear, List<int> years) {
-    final peakYear =
-        byYear.entries.reduce((a, b) => a.value >= b.value ? a : b);
+  Widget _trendInsights(BuildContext context, Map<int, int> byYear, List<int> years) {
+    final peakYear = byYear.entries.reduce((a, b) => a.value >= b.value ? a : b);
     final totalPubs = byYear.values.fold<int>(0, (s, v) => s + v);
 
     return Card(
@@ -192,23 +188,19 @@ class _PublicationsByYearTab extends StatelessWidget {
           children: [
             const SectionHeader(title: 'Trend Insights'),
             const SizedBox(height: 16),
-            _insightRow(context, 'Peak Year', '${peakYear.key}',
-                '${peakYear.value} publications'),
+            _insightRow(context, 'Peak Year', '${peakYear.key}', '${peakYear.value} publications'),
             const Divider(height: 24),
-            _insightRow(context, 'Year Range',
-                '${years.first} – ${years.last}',
+            _insightRow(context, 'Year Range', '${years.first} – ${years.last}',
                 '${years.last - years.first + 1} years of data'),
             const Divider(height: 24),
-            _insightRow(context, 'Total Publications', '$totalPubs',
-                'across all years'),
+            _insightRow(context, 'Total Publications', '$totalPubs', 'across all years'),
           ],
         ),
       ),
     );
   }
 
-  Widget _insightRow(
-      BuildContext context, String label, String value, String sub) {
+  Widget _insightRow(BuildContext context, String label, String value, String sub) {
     return Row(
       children: [
         Expanded(
@@ -217,16 +209,14 @@ class _PublicationsByYearTab extends StatelessWidget {
             children: [
               Text(label, style: Theme.of(context).textTheme.bodyMedium),
               Text(value,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppTheme.primary, fontWeight: FontWeight.w700)),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(color: AppTheme.primary, fontWeight: FontWeight.w700)),
             ],
           ),
         ),
-        Text(sub,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(fontSize: 11)),
+        Text(sub, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 11)),
       ],
     );
   }
@@ -275,11 +265,9 @@ class _TopJournalsTab extends StatelessWidget {
                           final entry = e.value;
                           final pct = entry.value / total * 100;
                           return PieChartSectionData(
-                            color: AppTheme.chartPalette[
-                                i % AppTheme.chartPalette.length],
+                            color: AppTheme.chartPalette[i % AppTheme.chartPalette.length],
                             value: entry.value.toDouble(),
-                            title:
-                                i < 5 ? '${pct.toStringAsFixed(1)}%' : '',
+                            title: i < 5 ? '${pct.toStringAsFixed(1)}%' : '',
                             radius: 100,
                             titleStyle: const TextStyle(
                                 color: Colors.white,
@@ -297,16 +285,14 @@ class _TopJournalsTab extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: entries.asMap().entries.map((e) {
-                      final color = AppTheme.chartPalette[
-                          e.key % AppTheme.chartPalette.length];
+                      final color = AppTheme.chartPalette[e.key % AppTheme.chartPalette.length];
                       return Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
                               width: 10,
                               height: 10,
-                              decoration: BoxDecoration(
-                                  color: color, shape: BoxShape.circle)),
+                              decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
                           const SizedBox(width: 4),
                           Text(
                             e.value.key.length > 25
@@ -330,8 +316,8 @@ class _TopJournalsTab extends StatelessWidget {
                 final entry = e.value;
                 final pct = entry.value / maxVal;
                 return Padding(
-                  padding: EdgeInsets.fromLTRB(16,
-                      i == 0 ? 16 : 8, 16, i == entries.length - 1 ? 16 : 8),
+                  padding: EdgeInsets.fromLTRB(
+                      16, i == 0 ? 16 : 8, 16, i == entries.length - 1 ? 16 : 8),
                   child: Row(
                     children: [
                       SizedBox(
@@ -339,9 +325,7 @@ class _TopJournalsTab extends StatelessWidget {
                         child: Text('${i + 1}',
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: i < 3
-                                  ? AppTheme.primary
-                                  : AppTheme.textSecondary,
+                              color: i < 3 ? AppTheme.primary : AppTheme.textSecondary,
                             )),
                       ),
                       Expanded(
@@ -349,8 +333,7 @@ class _TopJournalsTab extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(entry.key,
-                                style:
-                                    Theme.of(context).textTheme.bodyLarge,
+                                style: Theme.of(context).textTheme.bodyLarge,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis),
                             const SizedBox(height: 4),
@@ -361,8 +344,7 @@ class _TopJournalsTab extends StatelessWidget {
                                 minHeight: 6,
                                 backgroundColor: AppTheme.divider,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppTheme.chartPalette[
-                                      i % AppTheme.chartPalette.length],
+                                  AppTheme.chartPalette[i % AppTheme.chartPalette.length],
                                 ),
                               ),
                             ),
@@ -372,8 +354,7 @@ class _TopJournalsTab extends StatelessWidget {
                       const SizedBox(width: 12),
                       Text('${entry.value}',
                           style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primary)),
+                              fontWeight: FontWeight.w700, color: AppTheme.primary)),
                     ],
                   ),
                 );
@@ -412,8 +393,7 @@ class _TopPapersTab extends StatelessWidget {
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                PublicationDetailScreen(publication: papers[i]),
+            builder: (_) => PublicationDetailScreen(publication: papers[i]),
           ),
         ),
       ),
@@ -444,7 +424,6 @@ class _TopAuthorsTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Bar chart
           Card(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -469,10 +448,8 @@ class _TopAuthorsTab extends StatelessWidget {
                               BarChartRodData(
                                 toY: entry.value.toDouble(),
                                 width: entries.length > 8 ? 10 : 18,
-                                color: AppTheme.chartPalette[
-                                    i % AppTheme.chartPalette.length],
-                                borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(4)),
+                                color: AppTheme.chartPalette[i % AppTheme.chartPalette.length],
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                               ),
                             ],
                           );
@@ -493,9 +470,7 @@ class _TopAuthorsTab extends StatelessWidget {
                               reservedSize: 32,
                               getTitlesWidget: (v, _) => Text(
                                 '${v.toInt()}',
-                                style: const TextStyle(
-                                    fontSize: 10,
-                                    color: AppTheme.textSecondary),
+                                style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
                               ),
                             ),
                           ),
@@ -505,29 +480,21 @@ class _TopAuthorsTab extends StatelessWidget {
                               reservedSize: 40,
                               getTitlesWidget: (v, _) {
                                 final idx = v.toInt();
-                                if (idx < 0 || idx >= entries.length) {
-                                  return const SizedBox();
-                                }
+                                if (idx < 0 || idx >= entries.length) return const SizedBox();
                                 final name = entries[idx].key;
-                                // Show first name only to save space
                                 final short = name.split(' ').first;
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 6),
-                                  child: Text(
-                                    short,
-                                    style: const TextStyle(
-                                        fontSize: 9,
-                                        color: AppTheme.textSecondary),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                  child: Text(short,
+                                      style: const TextStyle(
+                                          fontSize: 9, color: AppTheme.textSecondary),
+                                      overflow: TextOverflow.ellipsis),
                                 );
                               },
                             ),
                           ),
-                          topTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
-                          rightTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                         ),
                         barTouchData: BarTouchData(
                           touchTooltipData: BarTouchTooltipData(
@@ -535,8 +502,7 @@ class _TopAuthorsTab extends StatelessWidget {
                               final name = entries[group.x].key;
                               return BarTooltipItem(
                                 '$name\n${rod.toY.toInt()} papers',
-                                const TextStyle(
-                                    color: Colors.white, fontSize: 11),
+                                const TextStyle(color: Colors.white, fontSize: 11),
                               );
                             },
                           ),
@@ -549,31 +515,28 @@ class _TopAuthorsTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // Ranked list
           Card(
             child: Column(
               children: entries.asMap().entries.map((e) {
                 final i = e.key;
                 final entry = e.value;
                 final pct = entry.value / maxVal;
-                final color = AppTheme.chartPalette[
-                    i % AppTheme.chartPalette.length];
+                final color = AppTheme.chartPalette[i % AppTheme.chartPalette.length];
 
                 return Padding(
-                  padding: EdgeInsets.fromLTRB(16,
-                      i == 0 ? 16 : 10, 16, i == entries.length - 1 ? 16 : 10),
+                  padding: EdgeInsets.fromLTRB(
+                      16, i == 0 ? 16 : 10, 16, i == entries.length - 1 ? 16 : 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          // Rank badge
                           Container(
                             width: 28,
                             height: 28,
                             decoration: BoxDecoration(
                               color: i < 3
-                                  ? color.withValues(alpha:0.15)
+                                  ? color.withValues(alpha: 0.15)
                                   : AppTheme.background,
                               borderRadius: BorderRadius.circular(6),
                             ),
@@ -583,26 +546,19 @@ class _TopAuthorsTab extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
-                                  color: i < 3
-                                      ? color
-                                      : AppTheme.textSecondary,
+                                  color: i < 3 ? color : AppTheme.textSecondary,
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 12),
-                          // Avatar
                           CircleAvatar(
                             radius: 16,
                             backgroundColor: color.withValues(alpha: 0.15),
                             child: Text(
-                              entry.key.isNotEmpty
-                                  ? entry.key[0].toUpperCase()
-                                  : '?',
+                              entry.key.isNotEmpty ? entry.key[0].toUpperCase() : '?',
                               style: TextStyle(
-                                  color: color,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13),
+                                  color: color, fontWeight: FontWeight.w700, fontSize: 13),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -620,10 +576,7 @@ class _TopAuthorsTab extends StatelessWidget {
                           Text(
                             '${entry.value} paper${entry.value != 1 ? 's' : ''}',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: color,
-                            ),
+                                fontSize: 12, fontWeight: FontWeight.w700, color: color),
                           ),
                         ],
                       ),
@@ -634,8 +587,7 @@ class _TopAuthorsTab extends StatelessWidget {
                           value: pct,
                           minHeight: 5,
                           backgroundColor: AppTheme.divider,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(color),
+                          valueColor: AlwaysStoppedAnimation<Color>(color),
                         ),
                       ),
                       if (i < entries.length - 1) ...[
