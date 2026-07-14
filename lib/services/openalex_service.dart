@@ -45,24 +45,56 @@ class OpenAlexService {
       '&page=$page'
       '&select=id,display_name,publication_year,cited_by_count,'
       'authorships,primary_location,doi,abstract_inverted_index'
-      '&mailto=$_email',
+      '&mailto=$_email'
+      '&api_key=R5pqp64tNZFP8u9S431c3w',
     );
 
     final response = await http.get(uri).timeout(_timeout);
 
     if (response.statusCode != 200) {
-      throw Exception('HTTP ${response.statusCode}');
+      debugPrint('Request URL: $uri');
+      debugPrint('Status Code: ${response.statusCode}');
+      debugPrint('Response Body: ${response.body}');
+      throw Exception(
+        'HTTP ${response.statusCode}\n'
+        'URL: $uri\n'
+        'Body: ${response.body}',
+      );
     }
 
     // compute() runs parsing in a background isolate without Dart 2.19 requirement
     return compute(_parsePublications, response.body);
   }
 
+  Future<http.Response> _getWithRetry(Uri uri) async {
+    const delays = [
+      Duration(seconds: 1),
+      Duration(seconds: 2),
+      Duration(seconds: 4),
+    ];
+
+    for (int i = 0; i < delays.length; i++) {
+      final response = await http.get(uri).timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        return response;
+      }
+
+      if (response.statusCode != 503) {
+        throw Exception('HTTP ${response.statusCode}');
+      }
+
+      await Future.delayed(delays[i]);
+    }
+
+    throw Exception('HTTP 503');
+  }
+
   Future<Publication?> fetchPublicationById(String id) async {
     final cleanId = id.split('/').last;
     final uri = Uri.parse('$_baseUrl/works/W$cleanId?mailto=$_email');
 
-    final response = await http.get(uri).timeout(_timeout);
+    final response = await _getWithRetry(uri).timeout(_timeout);
     if (response.statusCode != 200) return null;
 
     return compute(_parsePublication, response.body);
