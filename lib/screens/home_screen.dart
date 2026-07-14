@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/search_provider.dart';
 import '../theme.dart';
 import '../widgets/common_widgets.dart';
+import '../widgets/filter_bottom_sheet.dart';
 import 'publication_detail_screen.dart';
 import 'trend_analysis_screen.dart';
 import 'dashboard_screen.dart';
@@ -208,44 +209,155 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
+    final filtered = provider.filteredPublications;
+    final filterCount = provider.filter.activeCount;
+
     return Column(
       children: [
+        // ── Results bar with filter button ───────────────────────────────
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
           color: AppTheme.surface,
           child: Row(
             children: [
-              Icon(Icons.article_outlined, size: 16, color: AppTheme.textSecondary),
+              Icon(Icons.article_outlined,
+                  size: 16, color: AppTheme.textSecondary),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '${provider.publications.length} publications for "${provider.query}"',
+                  filterCount > 0
+                      ? '${filtered.length} of ${provider.publications.length} publications'
+                      : '${provider.publications.length} publications for "${provider.query}"',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
+              // Filter button with active-filter badge
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.tune,
+                      color: filterCount > 0
+                          ? AppTheme.primary
+                          : AppTheme.textSecondary,
+                    ),
+                    tooltip: 'Filter',
+                    onPressed: () => showFilterSheet(context),
+                  ),
+                  if (filterCount > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          color: AppTheme.accent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$filterCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              // Clear filter button
+              if (filterCount > 0)
+                TextButton(
+                  onPressed: provider.clearFilter,
+                  child: const Text('Clear',
+                      style: TextStyle(
+                          color: AppTheme.error, fontSize: 12)),
+                ),
             ],
           ),
         ),
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: provider.publications.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, i) {
-              final pub = provider.publications[i];
-              return PublicationCard(
-                publication: pub,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PublicationDetailScreen(publication: pub),
+        // ── Active filter chips ──────────────────────────────────────────
+        if (filterCount > 0) _buildActiveFilterChips(provider),
+        // ── Results list ─────────────────────────────────────────────────
+        if (filtered.isEmpty)
+          const Expanded(
+            child: EmptyState(
+              icon: Icons.search_off,
+              title: 'No Matches',
+              subtitle:
+                  'No publications match the current filters. Try adjusting or clearing them.',
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: filtered.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (_, i) {
+                final pub = filtered[i];
+                return PublicationCard(
+                  publication: pub,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          PublicationDetailScreen(publication: pub),
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
       ],
+    );
+  }
+
+  Widget _buildActiveFilterChips(SearchProvider provider) {
+    final filter = provider.filter;
+    return Container(
+      color: AppTheme.background,
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: [
+          if (filter.author != null && filter.author!.isNotEmpty)
+            _filterChip('Author: ${filter.author}',
+                () => provider.applyFilter(filter.copyWith(author: null))),
+          if (filter.yearFrom != null || filter.yearTo != null)
+            _filterChip(
+              'Year: ${filter.yearFrom ?? '...'} – ${filter.yearTo ?? '...'}',
+              () => provider.applyFilter(
+                  filter.copyWith(yearFrom: null, yearTo: null)),
+            ),
+          if (filter.journal != null && filter.journal!.isNotEmpty)
+            _filterChip('Journal: ${filter.journal}',
+                () => provider.applyFilter(filter.copyWith(journal: null))),
+          if (filter.field != null)
+            _filterChip('Field: ${filter.field}',
+                () => provider.applyFilter(filter.copyWith(field: null))),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterChip(String label, VoidCallback onRemove) {
+    return Chip(
+      label: Text(label,
+          style: const TextStyle(fontSize: 11, color: AppTheme.primary)),
+      backgroundColor: AppTheme.primary.withValues(alpha: 0.08),
+      side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.3)),
+      deleteIcon:
+          const Icon(Icons.close, size: 14, color: AppTheme.primary),
+      onDeleted: onRemove,
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
@@ -262,13 +374,13 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         // TrendAnalysisBody has its own internal sub-tabs (By Year / Journals /
         // Papers / Authors), so it needs its own DefaultTabController.
-        return const DefaultTabController(
+        return DefaultTabController(
           length: 4,
           child: Column(
             children: [
               Material(
                 color: AppTheme.primaryLight,
-                child: TabBar(
+                child: const TabBar(
                   isScrollable: true,
                   indicatorColor: Colors.white,
                   labelColor: Colors.white,
@@ -281,7 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              Expanded(child: TrendAnalysisBody()),
+              const Expanded(child: TrendAnalysisBody()),
             ],
           ),
         );
