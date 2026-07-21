@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import '../theme.dart';
 import '../models/publication.dart';
+import '../screens/journal_detail_screen.dart';
 
 // ── Section Header ────────────────────────────────────────────────────────────
 class SectionHeader extends StatelessWidget {
@@ -57,7 +58,7 @@ class PublicationCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: rank! <= 3
                         ? AppTheme.primary
-                        : AppTheme.primary.withValues(alpha:0.1),
+                        : AppTheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
@@ -85,14 +86,41 @@ class PublicationCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     if (publication.journalName != null)
-                      Text(
-                        publication.journalName!,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: AppTheme.accent, fontWeight: FontWeight.w500),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      GestureDetector(
+                        onTap: publication.journalSourceId != null
+                            ? () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => JournalDetailScreen(
+                                      sourceId: publication.journalSourceId,
+                                      journalName: publication.journalName,
+                                    ),
+                                  ),
+                                )
+                            : null,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                publication.journalName!,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                        color: AppTheme.accent,
+                                        fontWeight: FontWeight.w500),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (publication.journalSourceId != null) ...[
+                              const SizedBox(width: 4),
+                              const Icon(Icons.arrow_forward_ios,
+                                  size: 10, color: AppTheme.accent),
+                            ],
+                          ],
+                        ),
                       ),
                     const SizedBox(height: 8),
                     Row(
@@ -165,7 +193,7 @@ class StatCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: c.withValues(alpha:0.1),
+                color: c.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: c, size: 20),
@@ -239,10 +267,10 @@ class EmptyState extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha:0.08),
+                  color: AppTheme.primary.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 36, color: AppTheme.primary.withValues(alpha:0.6)),
+                child: Icon(icon, size: 36, color: AppTheme.primary.withValues(alpha: 0.6)),
               ),
               const SizedBox(height: 20),
               Text(title, style: Theme.of(context).textTheme.headlineMedium),

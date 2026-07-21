@@ -42,7 +42,7 @@ class AuthService {
       debugPrint('AuthService: authenticate() returned ${googleUser.email}');
 
       // 2. Get the ID token needed for Firebase.
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       debugPrint('AuthService: idToken is ${googleAuth.idToken == null ? "NULL" : "present"}');
 
       if (googleAuth.idToken == null) {
@@ -59,6 +59,11 @@ class AuthService {
       // 4. Sign in to Firebase with the Google credential.
       final userCredential =
           await _firebaseAuth.signInWithCredential(credential);
+
+      debugPrint("Firebase sign-in successful");
+      debugPrint("UID: ${userCredential.user?.uid}");
+      debugPrint("Email: ${userCredential.user?.email}");
+
       debugPrint('AuthService: Firebase sign-in OK, uid=${userCredential.user?.uid}');
 
       return userCredential.user;

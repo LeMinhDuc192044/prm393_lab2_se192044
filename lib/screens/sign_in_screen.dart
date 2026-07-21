@@ -24,16 +24,33 @@ class _SignInScreenState extends State<SignInScreen> {
     try {
       final user = await _authService.signInWithGoogle();
 
+      debugPrint("Returned user: $user");
+      debugPrint("Mounted: $mounted");
+
       if (user != null && mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        debugPrint("Navigating to HomeScreen...");
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
+          ),
         );
+      } else {
+        debugPrint("User is null");
       }
-      // user == null means the user cancelled the picker — no error needed.
     } catch (e) {
-      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      debugPrint(e.toString());
+
+      setState(() {
+        _error = e.toString();
+      });
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 

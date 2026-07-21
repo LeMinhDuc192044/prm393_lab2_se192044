@@ -1,20 +1,27 @@
 import 'package:flutter/foundation.dart';
 import '../models/publication.dart';
+import '../models/journal.dart';
 import '../models/search_filter.dart';
 import '../services/openalex_service.dart';
 import '../services/analytics_service.dart';
+import '../services/journal_service.dart';
 
 enum SearchStatus { idle, loading, success, error }
 
 class SearchProvider extends ChangeNotifier {
   final OpenAlexService _apiService = OpenAlexService();
   final AnalyticsService _analytics = AnalyticsService();
+  final JournalService _journalService = JournalService();
 
   SearchStatus _status = SearchStatus.idle;
   String _query = '';
   String _errorMessage = '';
   List<Publication> _publications = [];
   SearchFilter _filter = const SearchFilter();
+
+  // Journal state — driven by the same query
+  List<Journal> _journals = [];
+  SearchStatus _journalStatus = SearchStatus.idle;
 
   // Cached analytics — only recomputed when publications change
   Map<int, int>? _cachedByYear;
@@ -27,6 +34,10 @@ class SearchProvider extends ChangeNotifier {
   String get query => _query;
   String get errorMessage => _errorMessage;
   SearchFilter get filter => _filter;
+
+  // Journal getters
+  List<Journal> get journals => _journals;
+  SearchStatus get journalStatus => _journalStatus;
 
   /// All fetched publications (unfiltered).
   List<Publication> get publications => _publications;
@@ -136,14 +147,25 @@ class SearchProvider extends ChangeNotifier {
 
     _query = topic.trim();
     _status = SearchStatus.loading;
+    _journalStatus = SearchStatus.loading;
     _publications = [];
-    _filter = const SearchFilter(); // reset filters on new search
+    _journals = [];
+    _filter = const SearchFilter();
     _clearCache();
     _errorMessage = '';
     notifyListeners();
 
+    // Fetch publications and journals in parallel
+    await Future.wait([
+      _fetchPublications(),
+      _fetchJournals(),
+    ]);
+    notifyListeners();
+  }
+
+  Future<void> _fetchPublications() async {
     try {
-      debugPrint('SearchProvider: fetching "$_query"');
+      debugPrint('SearchProvider: fetching publications for "$_query"');
       List<Publication> results =
           await _apiService.fetchPublications(_query, maxPages: 2);
 
@@ -153,15 +175,27 @@ class SearchProvider extends ChangeNotifier {
         results = await _apiService.fetchPublications(_query, maxPages: 2);
       }
 
-      debugPrint('SearchProvider: got ${results.length} results');
+      debugPrint('SearchProvider: got ${results.length} publications');
       _publications = results;
       _status = SearchStatus.success;
     } catch (e) {
-      debugPrint('SearchProvider: ERROR — $e');
+      debugPrint('SearchProvider: publications ERROR — $e');
       _errorMessage = _friendlyError(e.toString());
       _status = SearchStatus.error;
     }
-    notifyListeners();
+  }
+
+  Future<void> _fetchJournals() async {
+    try {
+      debugPrint('SearchProvider: fetching journals for "$_query"');
+      final results = await _journalService.searchJournals(_query);
+      debugPrint('SearchProvider: got ${results.length} journals');
+      _journals = results;
+      _journalStatus = SearchStatus.success;
+    } catch (e) {
+      debugPrint('SearchProvider: journals ERROR — $e');
+      _journalStatus = SearchStatus.error;
+    }
   }
 
   void _clearCache() {
@@ -192,8 +226,10 @@ class SearchProvider extends ChangeNotifier {
 
   void reset() {
     _status = SearchStatus.idle;
+    _journalStatus = SearchStatus.idle;
     _query = '';
     _publications = [];
+    _journals = [];
     _filter = const SearchFilter();
     _errorMessage = '';
     _clearCache();
