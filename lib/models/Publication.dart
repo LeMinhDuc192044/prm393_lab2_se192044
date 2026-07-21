@@ -4,6 +4,7 @@ class Publication {
   final int year;
   final int citationCount;
   final String? journalName;
+  final String? journalSourceId; // OpenAlex source ID for the journal
   final String? doi;
   final String? abstract;
   final List<Author> authors;
@@ -14,6 +15,7 @@ class Publication {
     required this.year,
     required this.citationCount,
     this.journalName,
+    this.journalSourceId,
     this.doi,
     this.abstract,
     required this.authors,
@@ -34,12 +36,14 @@ class Publication {
         .whereType<Author>()
         .toList();
 
-    // Parse journal name
+    // Parse journal name and source ID
     String? journalName;
+    String? journalSourceId;
     final primaryLocation = json['primary_location'] as Map<String, dynamic>?;
     if (primaryLocation != null) {
       final source = primaryLocation['source'] as Map<String, dynamic>?;
       journalName = source?['display_name'];
+      journalSourceId = source?['id'] as String?;
     }
 
     // Parse abstract from abstract_inverted_index
@@ -55,6 +59,7 @@ class Publication {
       year: json['publication_year'] ?? 0,
       citationCount: json['cited_by_count'] ?? 0,
       journalName: journalName,
+      journalSourceId: journalSourceId,
       doi: json['doi'],
       abstract: abstract,
       authors: authors,

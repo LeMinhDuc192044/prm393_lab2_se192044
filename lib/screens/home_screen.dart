@@ -7,6 +7,7 @@ import '../widgets/filter_bottom_sheet.dart';
 import 'publication_detail_screen.dart';
 import 'trend_analysis_screen.dart';
 import 'dashboard_screen.dart';
+import 'journal_screen.dart';
 
 /// Single-screen Home with a persistent search bar at the top and a
 /// TabBar below it that switches between Search / Trends / Dashboard
@@ -52,14 +53,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Journal Trend Analyzer'),
         ),
         body: Column(
           children: [
-            // ── Persistent search bar — visible on every tab ──────────────
+            // ── Persistent search bar — visible on Search/Trends/Dashboard ──
             _buildSearchHeader(),
             // ── Tab content swaps below the search bar ────────────────────
             Expanded(
@@ -68,12 +69,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildSearchResultsTab(),
                   _buildTrendsTab(),
                   _buildDashboardTab(),
+                  const JournalScreen(),
                 ],
               ),
             ),
           ],
         ),
-        // ── Search / Trends / Dashboard buttons live at the bottom ──────────
+        // ── Bottom tab bar ────────────────────────────────────────────────────
         bottomNavigationBar: Material(
           color: AppTheme.primary,
           child: SafeArea(
@@ -86,6 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Tab(icon: Icon(Icons.search), text: 'Search'),
                 Tab(icon: Icon(Icons.bar_chart), text: 'Trends'),
                 Tab(icon: Icon(Icons.dashboard), text: 'Dashboard'),
+                Tab(icon: Icon(Icons.library_books), text: 'Journals'),
               ],
             ),
           ),
