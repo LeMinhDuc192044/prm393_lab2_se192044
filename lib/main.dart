@@ -10,6 +10,7 @@ import 'firebase_options.dart';
 import 'providers/search_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/sign_in_screen.dart';
+import 'screens/admin_dashboard_screen.dart';
 import 'theme.dart';
 import 'viewmodels/auth_view_model.dart';
 
@@ -64,9 +65,52 @@ class AuthGate extends StatelessWidget {
           );
         }
         if (snapshot.hasData) {
-          return const HomeScreen();
+          return _AuthorizationGate(user: snapshot.data!);
         }
         return const SignInScreen();
+      },
+    );
+  }
+}
+
+class _AuthorizationGate extends StatefulWidget {
+  const _AuthorizationGate({required this.user});
+  final User user;
+
+  @override
+  State<_AuthorizationGate> createState() => _AuthorizationGateState();
+}
+
+class _AuthorizationGateState extends State<_AuthorizationGate> {
+  bool _handledDisabled = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: context.read<AuthViewModel>().watchUserProfile(widget.user.uid),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        final data = snapshot.data!.data() ?? const <String, dynamic>{};
+        if (data['status'] == 'DISABLED') {
+          if (!_handledDisabled) {
+            _handledDisabled = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              if (!mounted) return;
+              await showDialog<void>(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => AlertDialog(
+                  title: const Text('Account disabled'),
+                  content: const Text('Your account has been disabled.'),
+                  actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+                ),
+              );
+              await context.read<AuthViewModel>().signOut();
+            });
+          }
+          return const Scaffold(body: Center(child: Text('Account disabled')));
+        }
+        return data['role'] == 'ADMIN' ? const AdminDashboardScreen() : const HomeScreen();
       },
     );
   }

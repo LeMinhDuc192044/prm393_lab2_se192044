@@ -19,15 +19,23 @@ class UserModel {
   final Timestamp? createdAt;
   final Timestamp? lastLogin;
 
-  Map<String, dynamic> toMap({bool includeCreatedAt = true}) {
+  Map<String, dynamic> toMap({bool includeCreatedAt = true, bool includeDefaults = false}) {
     return {
       'uid': uid,
       'email': email,
       'displayName': displayName,
       'photoURL': photoUrl,
       'provider': provider,
+      if (includeDefaults) ...{
+        'role': 'USER',
+        'status': 'ACTIVE',
+        'favoriteCount': 0,
+        'bookmarkCount': 0,
+        'searchCount': 0,
+      },
       if (includeCreatedAt) 'createdAt': createdAt ?? FieldValue.serverTimestamp(),
       'lastLogin': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     };
   }
 }

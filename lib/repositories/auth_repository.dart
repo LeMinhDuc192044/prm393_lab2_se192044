@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../services/firebase_sign_in_service.dart';
 
@@ -11,6 +12,9 @@ class AuthRepository {
   User? get currentUser => _authService.currentUser;
 
   Stream<User?> get authStateChanges => _authService.authStateChanges;
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>> watchUserProfile(String uid) =>
+      _authService.watchUserProfile(uid);
 
   Future<User?> signInWithEmailPassword({
     required String email,

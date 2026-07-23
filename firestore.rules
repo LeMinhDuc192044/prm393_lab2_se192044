@@ -5,14 +5,26 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function owner(uid) { return signedIn() && request.auth.uid == uid; }
     function admin() {
-      return signedIn() && request.auth.token.admin == true;
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN'
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'ACTIVE';
     }
 
     match /users/{uid} {
       allow read: if owner(uid) || admin();
-      allow create: if owner(uid) && request.resource.data.uid == uid;
-      allow update: if (owner(uid) || admin())
+      allow create: if owner(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.role == 'USER'
+        && request.resource.data.status == 'ACTIVE';
+      allow update: if admin()
         && request.resource.data.uid == resource.data.uid;
+      allow update: if owner(uid)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'email', 'displayName', 'photoURL', 'provider', 'lastLogin',
+          'updatedAt', 'favoriteCount', 'bookmarkCount', 'searchCount',
+          'totalSearches', 'lastSearch'
+        ]);
       allow delete: if admin();
 
       match /bookmarks/{id} {
@@ -66,6 +78,11 @@ service cloud.firestore {
     match /reports/{id} {
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
       allow read, update, delete: if admin();
+    }
+
+    match /app_config/{id} {
+      allow read: if signedIn();
+      allow write: if admin();
     }
 
     match /{document=**} {

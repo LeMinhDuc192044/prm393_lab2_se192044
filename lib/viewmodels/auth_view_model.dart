@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 import '../repositories/auth_repository.dart';
@@ -17,6 +18,9 @@ class AuthViewModel extends ChangeNotifier {
   User? get currentUser => _authRepository.currentUser;
   bool get isLoggedIn => currentUser != null;
   Stream<User?> get authStateChanges => _authRepository.authStateChanges;
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>> watchUserProfile(String uid) =>
+      _authRepository.watchUserProfile(uid);
   Future<User?> signInWithEmailPassword({
     required String email,
     required String password,

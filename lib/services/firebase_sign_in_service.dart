@@ -50,6 +50,9 @@ class AuthService {
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
+  Stream<DocumentSnapshot<Map<String, dynamic>>> watchUserProfile(String uid) =>
+      _firestore.collection('users').doc(uid).snapshots();
+
   Future<User?> signInWithEmailPassword({
     required String email,
     required String password,
@@ -178,7 +181,10 @@ class AuthService {
       provider: provider,
     );
     await reference.set(
-      profile.toMap(includeCreatedAt: !existing.exists),
+      profile.toMap(
+        includeCreatedAt: !existing.exists,
+        includeDefaults: !existing.exists,
+      ),
       SetOptions(merge: true),
     );
   }
