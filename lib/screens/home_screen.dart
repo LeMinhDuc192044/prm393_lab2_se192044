@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/search_provider.dart';
 import '../theme.dart';
+import '../viewmodels/auth_view_model.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/filter_bottom_sheet.dart';
 import 'publication_detail_screen.dart';
 import 'trend_analysis_screen.dart';
 import 'dashboard_screen.dart';
 import 'journal_screen.dart';
+import 'profile_screen.dart';
 
 /// Single-screen Home with a persistent search bar at the top and a
 /// TabBar below it that switches between Search / Trends / Dashboard
@@ -57,9 +59,24 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Journal Trend Analyzer'),
+          actions: [
+            IconButton(
+              tooltip: 'Profile',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              ),
+              icon: const Icon(Icons.account_circle_outlined),
+            ),
+            IconButton(
+              tooltip: 'Sign out',
+              onPressed: () => context.read<AuthViewModel>().signOut(),
+              icon: const Icon(Icons.logout),
+            ),
+          ],
         ),
         body: Column(
           children: [
+            _buildUserHeader(context),
             // ── Persistent search bar — visible on Search/Trends/Dashboard ──
             _buildSearchHeader(),
             // ── Tab content swaps below the search bar ────────────────────
@@ -76,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         // ── Bottom tab bar ────────────────────────────────────────────────────
-        bottomNavigationBar: Material(
+        bottomNavigationBar: const Material(
           color: AppTheme.primary,
           child: SafeArea(
             top: false,
@@ -84,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
               indicatorColor: Colors.white,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white60,
-              tabs: const [
+              tabs: [
                 Tab(icon: Icon(Icons.search), text: 'Search'),
                 Tab(icon: Icon(Icons.bar_chart), text: 'Trends'),
                 Tab(icon: Icon(Icons.dashboard), text: 'Dashboard'),
@@ -98,6 +115,56 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ── Persistent Search Header ─────────────────────────────────────────────────
+  Widget _buildUserHeader(BuildContext context) {
+    final user = context.watch<AuthViewModel>().currentUser;
+    if (user == null) return const SizedBox.shrink();
+
+    final provider = user.providerData.isEmpty
+        ? 'password'
+        : user.providerData.first.providerId;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      color: AppTheme.surface,
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundImage:
+                user.photoURL == null ? null : NetworkImage(user.photoURL!),
+            child: user.photoURL == null
+                ? const Icon(Icons.person_outline)
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user.displayName?.trim().isNotEmpty == true
+                      ? user.displayName!
+                      : 'Signed-in user',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                Text(user.email ?? '', style: const TextStyle(fontSize: 12)),
+                Text(
+                  'Provider: $provider  |  UID: ${user.uid}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSearchHeader() {
     return Container(
       color: AppTheme.primary,
@@ -112,13 +179,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: 'Search research topics...',
-                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                    hintStyle:
+                        TextStyle(color: Colors.white.withValues(alpha: 0.6)),
                     prefixIcon: const Icon(Icons.search, color: Colors.white70),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.15),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                      borderSide: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.3)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -137,7 +206,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   elevation: 0,
                 ),
                 onPressed: () => _search(_controller.text),
@@ -208,7 +278,8 @@ class _HomeScreenState extends State<HomeScreen> {
       return const EmptyState(
         icon: Icons.article_outlined,
         title: 'No Results',
-        subtitle: 'No publications found for this topic. Try a different keyword.',
+        subtitle:
+            'No publications found for this topic. Try a different keyword.',
       );
     }
 
@@ -223,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
           color: AppTheme.surface,
           child: Row(
             children: [
-              Icon(Icons.article_outlined,
+              const Icon(Icons.article_outlined,
                   size: 16, color: AppTheme.textSecondary),
               const SizedBox(width: 6),
               Expanded(
@@ -278,8 +349,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 TextButton(
                   onPressed: provider.clearFilter,
                   child: const Text('Clear',
-                      style: TextStyle(
-                          color: AppTheme.error, fontSize: 12)),
+                      style: TextStyle(color: AppTheme.error, fontSize: 12)),
                 ),
             ],
           ),
@@ -309,8 +379,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          PublicationDetailScreen(publication: pub),
+                      builder: (_) => PublicationDetailScreen(publication: pub),
                     ),
                   ),
                 );
@@ -336,8 +405,8 @@ class _HomeScreenState extends State<HomeScreen> {
           if (filter.yearFrom != null || filter.yearTo != null)
             _filterChip(
               'Year: ${filter.yearFrom ?? '...'} – ${filter.yearTo ?? '...'}',
-              () => provider.applyFilter(
-                  filter.copyWith(yearFrom: null, yearTo: null)),
+              () => provider
+                  .applyFilter(filter.copyWith(yearFrom: null, yearTo: null)),
             ),
           if (filter.journal != null && filter.journal!.isNotEmpty)
             _filterChip('Journal: ${filter.journal}',
@@ -356,8 +425,7 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(fontSize: 11, color: AppTheme.primary)),
       backgroundColor: AppTheme.primary.withValues(alpha: 0.08),
       side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.3)),
-      deleteIcon:
-          const Icon(Icons.close, size: 14, color: AppTheme.primary),
+      deleteIcon: const Icon(Icons.close, size: 14, color: AppTheme.primary),
       onDeleted: onRemove,
       visualDensity: VisualDensity.compact,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -377,13 +445,13 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         // TrendAnalysisBody has its own internal sub-tabs (By Year / Journals /
         // Papers / Authors), so it needs its own DefaultTabController.
-        return DefaultTabController(
+        return const DefaultTabController(
           length: 4,
           child: Column(
             children: [
               Material(
                 color: AppTheme.primaryLight,
-                child: const TabBar(
+                child: TabBar(
                   isScrollable: true,
                   indicatorColor: Colors.white,
                   labelColor: Colors.white,
@@ -396,7 +464,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              const Expanded(child: TrendAnalysisBody()),
+              Expanded(child: TrendAnalysisBody()),
             ],
           ),
         );

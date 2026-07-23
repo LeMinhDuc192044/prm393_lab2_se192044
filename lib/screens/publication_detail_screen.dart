@@ -1,13 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/publication.dart';
+import '../services/profile_service.dart';
 import '../theme.dart';
 import '../widgets/common_widgets.dart';
 
-class PublicationDetailScreen extends StatelessWidget {
+class PublicationDetailScreen extends StatefulWidget {
   final Publication publication;
 
   const PublicationDetailScreen({super.key, required this.publication});
+
+  @override
+  State<PublicationDetailScreen> createState() => _PublicationDetailScreenState();
+}
+
+class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
+  static final ProfileService _profileService = ProfileService();
+  Publication get publication => widget.publication;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _profileService.recordViewedPublication(
+        uid: user.uid,
+        workId: publication.id,
+        title: publication.title,
+      );
+    }
+  }
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
@@ -22,6 +46,36 @@ class PublicationDetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Publication Details'),
         actions: [
+          if (FirebaseAuth.instance.currentUser != null)
+            StreamBuilder(
+              stream: _profileService.bookmarkStream(FirebaseAuth.instance.currentUser!.uid, publication.id),
+              builder: (context, snapshot) {
+                final saved = snapshot.data?.exists == true;
+                return IconButton(
+                  tooltip: saved ? 'Remove bookmark' : 'Bookmark',
+                  icon: Icon(saved ? Icons.bookmark : Icons.bookmark_border),
+                  onPressed: () async {
+                    try {
+                      await _profileService.toggleBookmark(
+                        uid: FirebaseAuth.instance.currentUser!.uid,
+                        workId: publication.id,
+                        data: {
+                          'title': publication.title,
+                          'authors': publication.authors.map((author) => author.name).join(', '),
+                          'journal': publication.journalName ?? '',
+                          'year': publication.year,
+                        },
+                      );
+                    } on FirebaseException catch (error) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Bookmark failed: ${error.message ?? error.code}')),
+                      );
+                    }
+                  },
+                );
+              },
+            ),
           if (publication.doi != null)
             IconButton(
               icon: const Icon(Icons.open_in_new),

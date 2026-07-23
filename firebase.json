@@ -1,1 +1,29 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"prm393-lab2-se192044","appId":"1:703569163237:android:bb1fe8ff7f64a5b8c4f50c","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"prm393-lab2-se192044","configurations":{"android":"1:703569163237:android:bb1fe8ff7f64a5b8c4f50c","ios":"1:703569163237:ios:c69d9f6b34270300c4f50c","macos":"1:703569163237:ios:c69d9f6b34270300c4f50c","web":"1:703569163237:web:717cda3bea40c733c4f50c","windows":"1:703569163237:web:adea7def435a2ff4c4f50c"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "journal-trend-63175",
+          "appId": "1:718965389417:android:0324b0691b14af58f0caf8",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "journal-trend-63175",
+          "configurations": {
+            "android": "1:718965389417:android:0324b0691b14af58f0caf8",
+            "ios": "1:718965389417:ios:ef517fa4c9324dd8f0caf8",
+            "macos": "1:718965389417:ios:ef517fa4c9324dd8f0caf8",
+            "web": "1:718965389417:web:009e8fad6b0ed376f0caf8",
+            "windows": "1:718965389417:web:6ca9cb5d2ee5d949f0caf8"
+          }
+        }
+      }
+    }
+  }
+}

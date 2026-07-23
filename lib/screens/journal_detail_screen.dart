@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/journal.dart';
 import '../services/journal_service.dart';
+import '../services/profile_service.dart';
 import '../theme.dart';
 import '../widgets/common_widgets.dart';
 
@@ -26,6 +28,7 @@ class JournalDetailScreen extends StatefulWidget {
 
 class _JournalDetailScreenState extends State<JournalDetailScreen> {
   final _service = JournalService();
+  final _profileService = ProfileService();
 
   Journal? _journal;
   Map<int, List<JournalArticle>> _articlesByYear = {};
@@ -57,10 +60,12 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
         if (j != null) _loadArticles(j.id);
       }
     } catch (e) {
-      if (mounted) setState(() {
-        _error = e.toString();
-        _loadingJournal = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loadingJournal = false;
+        });
+      }
     }
   }
 
@@ -97,6 +102,26 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          if (_journal != null && FirebaseAuth.instance.currentUser != null)
+            StreamBuilder(
+              stream: _profileService.favoriteJournalStream(FirebaseAuth.instance.currentUser!.uid, _journal!.id),
+              builder: (context, snapshot) {
+                final saved = snapshot.data?.exists == true;
+                return IconButton(
+                  tooltip: saved ? 'Unfavorite journal' : 'Favorite journal',
+                  icon: Icon(saved ? Icons.favorite : Icons.favorite_border),
+                  onPressed: () => _profileService.toggleFavoriteJournal(
+                    uid: FirebaseAuth.instance.currentUser!.uid,
+                    journalId: _journal!.id,
+                    data: {
+                      'displayName': _journal!.displayName,
+                      'publisher': _journal!.publisherName ?? '',
+                      'country': _journal!.countryCode ?? '',
+                    },
+                  ),
+                );
+              },
+            ),
           if (_journal?.homepageUrl != null)
             IconButton(
               icon: const Icon(Icons.open_in_new),

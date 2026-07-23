@@ -1,39 +1,50 @@
+import 'dart:ui';
+
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'providers/search_provider.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_navigation_screen.dart';
 import 'screens/sign_in_screen.dart';
+import 'screens/admin_dashboard_screen.dart';
 import 'theme.dart';
+import 'viewmodels/auth_view_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  if (!kIsWeb) {
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+  }
   runApp(const JournalTrendAnalyzerApp());
 }
-
-/// TEMPORARY: set to true to skip the sign-in screen entirely and go
-/// straight to HomeScreen, so other features can be tested while
-/// Google Sign-In is being debugged. Set back to false when ready to
-/// test auth again.
-const bool kDisableAuthForTesting = true;
 
 class JournalTrendAnalyzerApp extends StatelessWidget {
   const JournalTrendAnalyzerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => SearchProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => SearchProvider()),
+        ChangeNotifierProvider(create: (_) => AuthViewModel()),
+      ],
       child: MaterialApp(
         title: 'Journal Trend Analyzer',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.theme,
-        home: kDisableAuthForTesting ? const SignInScreen() : const AuthGate(),
+        home: const AuthGate(),
       ),
     );
   }
@@ -47,7 +58,7 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
+      stream: context.read<AuthViewModel>().authStateChanges,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -55,9 +66,72 @@ class AuthGate extends StatelessWidget {
           );
         }
         if (snapshot.hasData) {
-          return const HomeScreen();
+          return _AuthorizationGate(user: snapshot.data!);
         }
         return const SignInScreen();
+      },
+    );
+  }
+}
+
+class _AuthorizationGate extends StatefulWidget {
+  const _AuthorizationGate({required this.user});
+  final User user;
+
+  @override
+  State<_AuthorizationGate> createState() => _AuthorizationGateState();
+}
+
+class _AuthorizationGateState extends State<_AuthorizationGate> {
+  bool _handledDisabled = false;
+  late Future<void> _profileMigration;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileMigration = context.read<AuthViewModel>().ensureUserProfile(widget.user);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _profileMigration,
+      builder: (context, migrationSnapshot) {
+        if (migrationSnapshot.hasError) {
+          return const Scaffold(body: Center(child: Text('Unable to load account profile.')));
+        }
+        if (migrationSnapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: context.read<AuthViewModel>().watchUserProfile(widget.user.uid),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            final data = snapshot.data!.data() ?? const <String, dynamic>{};
+            if (data['status'] == 'DISABLED') {
+              if (!_handledDisabled) {
+                _handledDisabled = true;
+                WidgetsBinding.instance.addPostFrameCallback((_) async {
+                  if (!mounted) return;
+                  final authViewModel = context.read<AuthViewModel>();
+                  await showDialog<void>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Account disabled'),
+                      content: const Text('Your account has been disabled.'),
+                      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+                    ),
+                  );
+                  if (!mounted) return;
+                  await authViewModel.signOut();
+                });
+              }
+              return const Scaffold(body: Center(child: Text('Account disabled')));
+            }
+            return data['role'] == 'ADMIN' ? const AdminDashboardScreen() : const MainNavigationScreen();
+          },
+        );
       },
     );
   }
