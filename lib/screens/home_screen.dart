@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/search_provider.dart';
+import '../services/firebase_sign_in_service.dart';
 import '../theme.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/filter_bottom_sheet.dart';
@@ -57,6 +58,13 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Journal Trend Analyzer'),
+          actions: [
+            IconButton(
+              tooltip: 'Sign out',
+              onPressed: () => AuthService().signOut(),
+              icon: const Icon(Icons.logout),
+            ),
+          ],
         ),
         body: Column(
           children: [
@@ -112,13 +120,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: 'Search research topics...',
-                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                    hintStyle:
+                        TextStyle(color: Colors.white.withValues(alpha: 0.6)),
                     prefixIcon: const Icon(Icons.search, color: Colors.white70),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.15),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                      borderSide: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.3)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -137,7 +147,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   elevation: 0,
                 ),
                 onPressed: () => _search(_controller.text),
@@ -208,7 +219,8 @@ class _HomeScreenState extends State<HomeScreen> {
       return const EmptyState(
         icon: Icons.article_outlined,
         title: 'No Results',
-        subtitle: 'No publications found for this topic. Try a different keyword.',
+        subtitle:
+            'No publications found for this topic. Try a different keyword.',
       );
     }
 
@@ -278,8 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 TextButton(
                   onPressed: provider.clearFilter,
                   child: const Text('Clear',
-                      style: TextStyle(
-                          color: AppTheme.error, fontSize: 12)),
+                      style: TextStyle(color: AppTheme.error, fontSize: 12)),
                 ),
             ],
           ),
@@ -309,8 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          PublicationDetailScreen(publication: pub),
+                      builder: (_) => PublicationDetailScreen(publication: pub),
                     ),
                   ),
                 );
@@ -336,8 +346,8 @@ class _HomeScreenState extends State<HomeScreen> {
           if (filter.yearFrom != null || filter.yearTo != null)
             _filterChip(
               'Year: ${filter.yearFrom ?? '...'} – ${filter.yearTo ?? '...'}',
-              () => provider.applyFilter(
-                  filter.copyWith(yearFrom: null, yearTo: null)),
+              () => provider
+                  .applyFilter(filter.copyWith(yearFrom: null, yearTo: null)),
             ),
           if (filter.journal != null && filter.journal!.isNotEmpty)
             _filterChip('Journal: ${filter.journal}',
@@ -356,8 +366,7 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(fontSize: 11, color: AppTheme.primary)),
       backgroundColor: AppTheme.primary.withValues(alpha: 0.08),
       side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.3)),
-      deleteIcon:
-          const Icon(Icons.close, size: 14, color: AppTheme.primary),
+      deleteIcon: const Icon(Icons.close, size: 14, color: AppTheme.primary),
       onDeleted: onRemove,
       visualDensity: VisualDensity.compact,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,

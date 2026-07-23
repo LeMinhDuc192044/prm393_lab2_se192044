@@ -29,6 +29,44 @@ class AuthService {
   /// Stream of auth state changes — use this to react to sign-in/sign-out.
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
+  Future<User?> signInWithEmailPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      return userCredential.user;
+    } on FirebaseAuthException catch (e) {
+      debugPrint('AuthService: email sign-in failed code=${e.code}');
+      throw Exception(_friendlyAuthError(e.code));
+    } catch (e) {
+      debugPrint('AuthService: email sign-in unexpected error: $e');
+      throw Exception('Email sign-in failed: $e');
+    }
+  }
+
+  Future<User?> createUserWithEmailPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      return userCredential.user;
+    } on FirebaseAuthException catch (e) {
+      debugPrint('AuthService: email registration failed code=${e.code}');
+      throw Exception(_friendlyAuthError(e.code));
+    } catch (e) {
+      debugPrint('AuthService: email registration unexpected error: $e');
+      throw Exception('Account registration failed: $e');
+    }
+  }
+
   /// Signs in with Google. Returns the signed-in [User], or null if the
   /// user cancelled the Google account picker.
   Future<User?> signInWithGoogle() async {
@@ -37,13 +75,13 @@ class AuthService {
       debugPrint('AuthService: initialized OK');
 
       // 1. Trigger Google authentication (v7: authenticate() replaces signIn()).
-      final GoogleSignInAccount googleUser =
-          await _googleSignIn.authenticate();
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
       debugPrint('AuthService: authenticate() returned ${googleUser.email}');
 
       // 2. Get the ID token needed for Firebase.
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      debugPrint('AuthService: idToken is ${googleAuth.idToken == null ? "NULL" : "present"}');
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      debugPrint(
+          'AuthService: idToken is ${googleAuth.idToken == null ? "NULL" : "present"}');
 
       if (googleAuth.idToken == null) {
         throw Exception(
@@ -64,11 +102,13 @@ class AuthService {
       debugPrint("UID: ${userCredential.user?.uid}");
       debugPrint("Email: ${userCredential.user?.email}");
 
-      debugPrint('AuthService: Firebase sign-in OK, uid=${userCredential.user?.uid}');
+      debugPrint(
+          'AuthService: Firebase sign-in OK, uid=${userCredential.user?.uid}');
 
       return userCredential.user;
     } on GoogleSignInException catch (e) {
-      debugPrint('AuthService: GoogleSignInException code=${e.code} desc=${e.description}');
+      debugPrint(
+          'AuthService: GoogleSignInException code=${e.code} desc=${e.description}');
       // User cancelled the picker, or another Google-side issue.
       if (e.code == GoogleSignInExceptionCode.canceled) return null;
       throw Exception('Google sign-in failed: ${e.description ?? e.code}');
@@ -83,6 +123,7 @@ class AuthService {
 
   /// Signs out of both Firebase and Google.
   Future<void> signOut() async {
+    await _ensureInitialized();
     await Future.wait([
       _firebaseAuth.signOut(),
       _googleSignIn.signOut(),
@@ -93,10 +134,26 @@ class AuthService {
     switch (code) {
       case 'account-exists-with-different-credential':
         return 'An account already exists with a different sign-in method.';
+      case 'email-already-in-use':
+        return 'This email is already registered. Please sign in instead.';
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
       case 'invalid-credential':
-        return 'The credential is malformed or has expired.';
+        return 'Invalid email or password.';
       case 'network-request-failed':
         return 'No internet connection. Please check your network.';
+      case 'operation-not-allowed':
+        return 'This sign-in method is not enabled in Firebase Authentication.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait and try again.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'user-not-found':
+        return 'No account found for this email.';
+      case 'weak-password':
+        return 'Password must be at least 6 characters.';
+      case 'wrong-password':
+        return 'Invalid email or password.';
       default:
         return 'Sign-in failed ($code). Please try again.';
     }

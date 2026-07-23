@@ -16,12 +16,6 @@ void main() async {
   runApp(const JournalTrendAnalyzerApp());
 }
 
-/// TEMPORARY: set to true to skip the sign-in screen entirely and go
-/// straight to HomeScreen, so other features can be tested while
-/// Google Sign-In is being debugged. Set back to false when ready to
-/// test auth again.
-const bool kDisableAuthForTesting = true;
-
 class JournalTrendAnalyzerApp extends StatelessWidget {
   const JournalTrendAnalyzerApp({super.key});
 
@@ -33,7 +27,7 @@ class JournalTrendAnalyzerApp extends StatelessWidget {
         title: 'Journal Trend Analyzer',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.theme,
-        home: kDisableAuthForTesting ? const SignInScreen() : const AuthGate(),
+        home: const AuthGate(),
       ),
     );
   }

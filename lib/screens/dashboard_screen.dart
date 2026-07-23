@@ -34,91 +34,91 @@ class DashboardBody extends StatelessWidget {
     final topAuthors = provider.topAuthors;
 
     return SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Overview header ─────────────────────────────────────────────
-            _OverviewHeader(query: provider.query, summary: summary),
-            const SizedBox(height: 16),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Overview header ─────────────────────────────────────────────
+          _OverviewHeader(query: provider.query, summary: summary),
+          const SizedBox(height: 16),
 
-            // ── Key Metrics grid ────────────────────────────────────────────
+          // ── Key Metrics grid ────────────────────────────────────────────
+          const SectionHeader(
+            title: 'Key Metrics',
+            subtitle: 'Summary statistics for the selected topic',
+          ),
+          const SizedBox(height: 12),
+          _MetricsGrid(summary: summary),
+          const SizedBox(height: 24),
+
+          // ── Most Influential Paper ───────────────────────────────────────
+          if (summary.mostInfluentialPaper != null) ...[
             const SectionHeader(
-              title: 'Key Metrics',
-              subtitle: 'Summary statistics for the selected topic',
+              title: 'Most Influential Paper',
+              subtitle: 'Highest citation count in this dataset',
             ),
             const SizedBox(height: 12),
-            _MetricsGrid(summary: summary),
-            const SizedBox(height: 24),
-
-            // ── Most Influential Paper ───────────────────────────────────────
-            if (summary.mostInfluentialPaper != null) ...[
-              const SectionHeader(
-                title: 'Most Influential Paper',
-                subtitle: 'Highest citation count in this dataset',
-              ),
-              const SizedBox(height: 12),
-              _HighlightPaperCard(
-                publication: summary.mostInfluentialPaper!,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PublicationDetailScreen(
-                      publication: summary.mostInfluentialPaper!,
-                    ),
+            _HighlightPaperCard(
+              publication: summary.mostInfluentialPaper!,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PublicationDetailScreen(
+                    publication: summary.mostInfluentialPaper!,
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-            ],
-
-            // ── Top Journal & Top Author highlights ──────────────────────────
-            const SectionHeader(
-              title: 'Top Highlights',
-              subtitle: 'Leading journal and author for this topic',
-            ),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _HighlightCard(
-                    icon: Icons.library_books_outlined,
-                    label: 'Top Journal',
-                    value: summary.topJournal,
-                    color: AppTheme.accent,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _HighlightCard(
-                    icon: Icons.person_outline,
-                    label: 'Top Author',
-                    value: summary.topAuthor,
-                    color: const Color(0xFF8B5CF6),
-                  ),
-                ),
-              ],
             ),
             const SizedBox(height: 24),
-
-            // ── Top Contributing Authors ─────────────────────────────────────
-            if (topAuthors.isNotEmpty) ...[
-              const SectionHeader(
-                title: 'Top Contributing Authors',
-                subtitle: 'By number of publications in this topic',
-              ),
-              const SizedBox(height: 12),
-              _TopAuthorsCard(topAuthors: topAuthors),
-              const SizedBox(height: 24),
-            ],
-
-            // ── Quick Insight ────────────────────────────────────────────────
-            _QuickInsightCard(summary: summary),
-            const SizedBox(height: 32),
           ],
-        ),
-      );
+
+          // ── Top Journal & Top Author highlights ──────────────────────────
+          const SectionHeader(
+            title: 'Top Highlights',
+            subtitle: 'Leading journal and author for this topic',
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _HighlightCard(
+                  icon: Icons.library_books_outlined,
+                  label: 'Top Journal',
+                  value: summary.topJournal,
+                  color: AppTheme.accent,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _HighlightCard(
+                  icon: Icons.person_outline,
+                  label: 'Top Author',
+                  value: summary.topAuthor,
+                  color: const Color(0xFF8B5CF6),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // ── Top Contributing Authors ─────────────────────────────────────
+          if (topAuthors.isNotEmpty) ...[
+            const SectionHeader(
+              title: 'Top Contributing Authors',
+              subtitle: 'By number of publications in this topic',
+            ),
+            const SizedBox(height: 12),
+            _TopAuthorsCard(topAuthors: topAuthors),
+            const SizedBox(height: 24),
+          ],
+
+          // ── Quick Insight ────────────────────────────────────────────────
+          _QuickInsightCard(summary: summary),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
   }
 }
 
@@ -184,12 +184,14 @@ class _OverviewHeader extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              _headerStat(context, '${summary.totalPublications}', 'Publications'),
+              _headerStat(
+                  context, '${summary.totalPublications}', 'Publications'),
               _divider(),
-              _headerStat(context,
-                  summary.avgCitations.toStringAsFixed(1), 'Avg Citations'),
+              _headerStat(context, summary.avgCitations.toStringAsFixed(1),
+                  'Avg Citations'),
               _divider(),
-              _headerStat(context,
+              _headerStat(
+                  context,
                   summary.mostActiveYear > 0
                       ? '${summary.mostActiveYear}'
                       : 'N/A',
@@ -243,101 +245,46 @@ class _MetricsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            children: [
-              _metricTile(
-                icon: Icons.article_outlined,
-                label: 'Total Publications',
-                value: '${summary.totalPublications}',
-                color: AppTheme.primary,
-              ),
-              const SizedBox(height: 12),
-              _metricTile(
-                icon: Icons.calendar_today_outlined,
-                label: 'Most Active Year',
-                value: summary.mostActiveYear > 0
-                    ? '${summary.mostActiveYear}'
-                    : 'N/A',
-                color: const Color(0xFFF59E0B),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            children: [
-              _metricTile(
-                icon: Icons.format_quote_outlined,
-                label: 'Avg Citations',
-                value: summary.avgCitations.toStringAsFixed(1),
-                color: AppTheme.accent,
-              ),
-              const SizedBox(height: 12),
-              _metricTile(
-                icon: Icons.library_books_outlined,
-                label: 'Top Journal',
-                value: summary.topJournal,
-                color: const Color(0xFF8B5CF6),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _metricTile({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.divider),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 700;
+        return GridView.count(
+          crossAxisCount: wide ? 4 : 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: wide ? 1.25 : 1.05,
+          children: [
+            StatCard(
+              label: 'Total Publications',
+              value: '${summary.totalPublications}',
+              icon: Icons.article_outlined,
+              color: AppTheme.primary,
             ),
-            child: Icon(icon, color: color, size: 18),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: color,
+            StatCard(
+              label: 'Avg Citations',
+              value: summary.avgCitations.toStringAsFixed(1),
+              icon: Icons.format_quote_outlined,
+              color: AppTheme.accent,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
+            StatCard(
+              label: 'Most Active Year',
+              value: summary.mostActiveYear > 0
+                  ? '${summary.mostActiveYear}'
+                  : 'N/A',
+              icon: Icons.calendar_today_outlined,
+              color: const Color(0xFFF59E0B),
+            ),
+            StatCard(
+              label: 'Top Journal',
+              value: summary.topJournal,
+              icon: Icons.library_books_outlined,
+              color: const Color(0xFF8B5CF6),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -363,7 +310,8 @@ class _HighlightPaperCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
@@ -387,7 +335,8 @@ class _HighlightPaperCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppTheme.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(6),
@@ -453,7 +402,10 @@ class _HighlightPaperCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        publication.authors.map((a) => a.name).take(3).join(', '),
+                        publication.authors
+                            .map((a) => a.name)
+                            .take(3)
+                            .join(', '),
                         style: const TextStyle(
                             fontSize: 12, color: AppTheme.textSecondary),
                         maxLines: 1,
@@ -551,10 +503,12 @@ class _TopAuthorsCard extends StatelessWidget {
               final i = e.key;
               final entry = e.value;
               final pct = entry.value / maxVal;
-              final color = AppTheme.chartPalette[i % AppTheme.chartPalette.length];
+              final color =
+                  AppTheme.chartPalette[i % AppTheme.chartPalette.length];
 
               return Padding(
-                padding: EdgeInsets.only(bottom: i < entries.length - 1 ? 14 : 0),
+                padding:
+                    EdgeInsets.only(bottom: i < entries.length - 1 ? 14 : 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
