@@ -1,32 +1,53 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, debugPrint, defaultTargetPlatform, kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
+
+import '../models/user_model.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
   bool _initialized = false;
 
-  /// google_sign_in v7 requires an explicit async initialize() call
-  /// before any sign-in operation. Safe to call multiple times.
-  ///
-  /// serverClientId is the Web client ID from Firebase/Google Cloud
-  /// Console (NOT the Android client ID). Required for Android — without
-  /// it, Google won't issue an ID token and sign-in fails silently.
-  static const String _serverClientId =
-      '703569163237-3qt6ss56idppqr9gk1erhve6upceroa8.apps.googleusercontent.com';
+  static const String _webClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+  );
+  static const String _desktopClientId = String.fromEnvironment(
+    'GOOGLE_DESKTOP_CLIENT_ID',
+  );
+
+  bool get _isWindows =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
 
   Future<void> _ensureInitialized() async {
     if (_initialized) return;
-    await _googleSignIn.initialize(serverClientId: _serverClientId);
+    final isDesktop = !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.windows ||
+            defaultTargetPlatform == TargetPlatform.macOS);
+
+    if (isDesktop) {
+      await _googleSignIn.initialize(
+        clientId: _desktopClientId.isEmpty ? null : _desktopClientId,
+        serverClientId: _webClientId.isEmpty ? null : _webClientId,
+      );
+    } else if (kIsWeb) {
+      await _googleSignIn.initialize(
+        clientId: _webClientId.isEmpty ? null : _webClientId,
+      );
+    } else {
+      await _googleSignIn.initialize(
+        serverClientId: _webClientId.isEmpty ? null : _webClientId,
+      );
+    }
     _initialized = true;
   }
 
-  /// Currently signed-in user, or null if signed out.
   User? get currentUser => _firebaseAuth.currentUser;
 
-  /// Stream of auth state changes — use this to react to sign-in/sign-out.
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
   Future<User?> signInWithEmailPassword({
@@ -38,6 +59,7 @@ class AuthService {
         email: email.trim(),
         password: password,
       );
+      await _saveUserProfile(userCredential.user, 'password');
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       debugPrint('AuthService: email sign-in failed code=${e.code}');
@@ -57,6 +79,7 @@ class AuthService {
         email: email.trim(),
         password: password,
       );
+      await _saveUserProfile(userCredential.user, 'password');
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       debugPrint('AuthService: email registration failed code=${e.code}');
@@ -67,67 +90,97 @@ class AuthService {
     }
   }
 
-  /// Signs in with Google. Returns the signed-in [User], or null if the
-  /// user cancelled the Google account picker.
   Future<User?> signInWithGoogle() async {
     try {
+      if (kIsWeb) {
+        final userCredential = await _firebaseAuth.signInWithPopup(
+          GoogleAuthProvider(),
+        );
+        await _saveUserProfile(userCredential.user, 'google.com');
+        return userCredential.user;
+      }
+
+      if (_isWindows) {
+        throw Exception('Google Sign-In is not supported on Windows.');
+      }
+
       await _ensureInitialized();
-      debugPrint('AuthService: initialized OK');
 
-      // 1. Trigger Google authentication (v7: authenticate() replaces signIn()).
       final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
-      debugPrint('AuthService: authenticate() returned ${googleUser.email}');
-
-      // 2. Get the ID token needed for Firebase.
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
-      debugPrint(
-          'AuthService: idToken is ${googleAuth.idToken == null ? "NULL" : "present"}');
 
       if (googleAuth.idToken == null) {
         throw Exception(
-            'Google did not return an ID token. This usually means the '
-            'serverClientId is missing or incorrect in initialize().');
+          'Google did not return an ID token. Check GOOGLE_WEB_CLIENT_ID, '
+          'Firebase Google provider, and Android SHA-1/SHA-256 settings.',
+        );
       }
 
-      // 3. Create a Firebase credential.
-      final credential = GoogleAuthProvider.credential(
-        idToken: googleAuth.idToken,
-      );
-
-      // 4. Sign in to Firebase with the Google credential.
-      final userCredential =
-          await _firebaseAuth.signInWithCredential(credential);
-
-      debugPrint("Firebase sign-in successful");
-      debugPrint("UID: ${userCredential.user?.uid}");
-      debugPrint("Email: ${userCredential.user?.email}");
-
-      debugPrint(
-          'AuthService: Firebase sign-in OK, uid=${userCredential.user?.uid}');
-
-      return userCredential.user;
+      return signInWithGoogleIdToken(googleAuth.idToken);
     } on GoogleSignInException catch (e) {
       debugPrint(
-          'AuthService: GoogleSignInException code=${e.code} desc=${e.description}');
-      // User cancelled the picker, or another Google-side issue.
+        'AuthService: GoogleSignInException code=${e.code} desc=${e.description}',
+      );
       if (e.code == GoogleSignInExceptionCode.canceled) return null;
       throw Exception('Google sign-in failed: ${e.description ?? e.code}');
     } on FirebaseAuthException catch (e) {
       debugPrint('AuthService: FirebaseAuthException code=${e.code}');
       throw Exception(_friendlyAuthError(e.code));
     } catch (e) {
-      debugPrint('AuthService: unexpected error: $e');
+      debugPrint('AuthService: unexpected Google sign-in error: $e');
       throw Exception('Google sign-in failed: $e');
     }
   }
 
-  /// Signs out of both Firebase and Google.
+  Future<void> resetPassword(String email) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email.trim());
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_friendlyAuthError(e.code));
+    }
+  }
+
+  Future<User?> signInWithGoogleIdToken(String? idToken) async {
+    if (idToken == null) {
+      throw Exception(
+        'Google did not return an ID token. Check the Web OAuth Client ID '
+        'and the Firebase Google provider configuration.',
+      );
+    }
+
+    final credential = GoogleAuthProvider.credential(idToken: idToken);
+    final userCredential = await _firebaseAuth.signInWithCredential(credential);
+    await _saveUserProfile(userCredential.user, 'google.com');
+    debugPrint(
+      'AuthService: Firebase Google sign-in OK, uid=${userCredential.user?.uid}',
+    );
+    return userCredential.user;
+  }
+
   Future<void> signOut() async {
-    await _ensureInitialized();
-    await Future.wait([
-      _firebaseAuth.signOut(),
-      _googleSignIn.signOut(),
-    ]);
+    await _firebaseAuth.signOut();
+    if (!kIsWeb && !_isWindows) {
+      await _ensureInitialized();
+      await _googleSignIn.signOut();
+    }
+  }
+
+  Future<void> _saveUserProfile(User? user, String provider) async {
+    if (user == null) return;
+
+    final reference = _firestore.collection('users').doc(user.uid);
+    final existing = await reference.get();
+    final profile = UserModel(
+      uid: user.uid,
+      email: user.email ?? '',
+      displayName: user.displayName,
+      photoUrl: user.photoURL,
+      provider: provider,
+    );
+    await reference.set(
+      profile.toMap(includeCreatedAt: !existing.exists),
+      SetOptions(merge: true),
+    );
   }
 
   String _friendlyAuthError(String code) {
@@ -138,7 +191,11 @@ class AuthService {
         return 'This email is already registered. Please sign in instead.';
       case 'invalid-email':
         return 'Please enter a valid email address.';
+      case 'popup-closed-by-user':
+      case 'cancelled-popup-request':
+        return 'Google sign-in was cancelled.';
       case 'invalid-credential':
+      case 'wrong-password':
         return 'Invalid email or password.';
       case 'network-request-failed':
         return 'No internet connection. Please check your network.';
@@ -152,8 +209,6 @@ class AuthService {
         return 'No account found for this email.';
       case 'weak-password':
         return 'Password must be at least 6 characters.';
-      case 'wrong-password':
-        return 'Invalid email or password.';
       default:
         return 'Sign-in failed ($code). Please try again.';
     }

@@ -518,8 +518,9 @@ class _TopAuthorsTab extends StatelessWidget {
                               reservedSize: 40,
                               getTitlesWidget: (v, _) {
                                 final idx = v.toInt();
-                                if (idx < 0 || idx >= entries.length)
+                                if (idx < 0 || idx >= entries.length) {
                                   return const SizedBox();
+                                }
                                 final name = entries[idx].key;
                                 final short = name.split(' ').first;
                                 return Padding(

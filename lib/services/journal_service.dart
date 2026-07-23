@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import '../models/journal.dart';
 
 class JournalService {
-  static const String _baseUrl = 'https://api.openalex.org';
   static const String _email = 'student@university.edu';
   static const Duration _timeout = Duration(seconds: 15);
 

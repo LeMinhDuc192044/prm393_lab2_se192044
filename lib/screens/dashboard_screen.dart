@@ -316,9 +316,9 @@ class _HighlightPaperCard extends StatelessWidget {
                       color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         Icon(Icons.emoji_events_outlined,
                             size: 14, color: Color(0xFFF59E0B)),
                         SizedBox(width: 4),

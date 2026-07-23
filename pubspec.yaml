@@ -23,6 +23,7 @@ dependencies:
   # Firebase
   firebase_core: ^3.15.2
   firebase_auth: ^5.7.0
+  cloud_firestore: ^5.6.12
   google_sign_in: ^7.1.1
 
 

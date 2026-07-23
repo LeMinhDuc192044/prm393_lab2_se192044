@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/search_provider.dart';
-import '../services/firebase_sign_in_service.dart';
 import '../theme.dart';
+import '../viewmodels/auth_view_model.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/filter_bottom_sheet.dart';
 import 'publication_detail_screen.dart';
@@ -61,13 +61,14 @@ class _HomeScreenState extends State<HomeScreen> {
           actions: [
             IconButton(
               tooltip: 'Sign out',
-              onPressed: () => AuthService().signOut(),
+              onPressed: () => context.read<AuthViewModel>().signOut(),
               icon: const Icon(Icons.logout),
             ),
           ],
         ),
         body: Column(
           children: [
+            _buildUserHeader(context),
             // ── Persistent search bar — visible on Search/Trends/Dashboard ──
             _buildSearchHeader(),
             // ── Tab content swaps below the search bar ────────────────────
@@ -84,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         // ── Bottom tab bar ────────────────────────────────────────────────────
-        bottomNavigationBar: Material(
+        bottomNavigationBar: const Material(
           color: AppTheme.primary,
           child: SafeArea(
             top: false,
@@ -92,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
               indicatorColor: Colors.white,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white60,
-              tabs: const [
+              tabs: [
                 Tab(icon: Icon(Icons.search), text: 'Search'),
                 Tab(icon: Icon(Icons.bar_chart), text: 'Trends'),
                 Tab(icon: Icon(Icons.dashboard), text: 'Dashboard'),
@@ -106,6 +107,56 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ── Persistent Search Header ─────────────────────────────────────────────────
+  Widget _buildUserHeader(BuildContext context) {
+    final user = context.watch<AuthViewModel>().currentUser;
+    if (user == null) return const SizedBox.shrink();
+
+    final provider = user.providerData.isEmpty
+        ? 'password'
+        : user.providerData.first.providerId;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      color: AppTheme.surface,
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundImage:
+                user.photoURL == null ? null : NetworkImage(user.photoURL!),
+            child: user.photoURL == null
+                ? const Icon(Icons.person_outline)
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user.displayName?.trim().isNotEmpty == true
+                      ? user.displayName!
+                      : 'Signed-in user',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                Text(user.email ?? '', style: const TextStyle(fontSize: 12)),
+                Text(
+                  'Provider: $provider  |  UID: ${user.uid}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSearchHeader() {
     return Container(
       color: AppTheme.primary,
@@ -235,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
           color: AppTheme.surface,
           child: Row(
             children: [
-              Icon(Icons.article_outlined,
+              const Icon(Icons.article_outlined,
                   size: 16, color: AppTheme.textSecondary),
               const SizedBox(width: 6),
               Expanded(
@@ -386,13 +437,13 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         // TrendAnalysisBody has its own internal sub-tabs (By Year / Journals /
         // Papers / Authors), so it needs its own DefaultTabController.
-        return DefaultTabController(
+        return const DefaultTabController(
           length: 4,
           child: Column(
             children: [
               Material(
                 color: AppTheme.primaryLight,
-                child: const TabBar(
+                child: TabBar(
                   isScrollable: true,
                   indicatorColor: Colors.white,
                   labelColor: Colors.white,
@@ -405,7 +456,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              const Expanded(child: TrendAnalysisBody()),
+              Expanded(child: TrendAnalysisBody()),
             ],
           ),
         );

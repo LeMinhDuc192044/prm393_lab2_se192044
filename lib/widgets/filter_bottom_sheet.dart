@@ -149,11 +149,11 @@ class _FilterSheetState extends State<_FilterSheet> {
             Row(
               children: [
                 Text('$_yearFrom',
-                    style: TextStyle(
+                    style: const TextStyle(
                         color: AppTheme.primary, fontWeight: FontWeight.w700)),
                 const Spacer(),
                 Text('$_yearTo',
-                    style: TextStyle(
+                    style: const TextStyle(
                         color: AppTheme.primary, fontWeight: FontWeight.w700)),
               ],
             ),
@@ -209,7 +209,7 @@ class _FilterSheetState extends State<_FilterSheet> {
             _label(context, Icons.school_outlined, 'Research Field / Major'),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _selectedField,
+              initialValue: _selectedField,
               hint: const Text('Select a field...'),
               decoration: _inputDecoration(null),
               isExpanded: true,

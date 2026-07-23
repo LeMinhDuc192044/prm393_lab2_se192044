@@ -57,10 +57,12 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
         if (j != null) _loadArticles(j.id);
       }
     } catch (e) {
-      if (mounted) setState(() {
-        _error = e.toString();
-        _loadingJournal = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loadingJournal = false;
+        });
+      }
     }
   }
 

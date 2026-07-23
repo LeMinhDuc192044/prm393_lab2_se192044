@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import '../services/firebase_sign_in_service.dart';
 import '../theme.dart';
+import '../viewmodels/auth_view_model.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -11,16 +12,12 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  final _authService = AuthService();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _isRegisterMode = false;
-  bool _loading = false;
   bool _obscurePassword = true;
-  String? _error;
-
   @override
   void dispose() {
     _emailController.dispose();
@@ -28,59 +25,72 @@ class _SignInScreenState extends State<SignInScreen> {
     super.dispose();
   }
 
-  Future<void> _runAuthAction(Future<void> Function() action) async {
-    if (_loading) return;
-
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-
-    try {
-      await action();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
-  }
-
   Future<void> _handleEmailPasswordAuth() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    await _runAuthAction(() async {
-      if (_isRegisterMode) {
-        await _authService.createUserWithEmailPassword(
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-      } else {
-        await _authService.signInWithEmailPassword(
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-      }
-    });
+    final authViewModel = context.read<AuthViewModel>();
+    if (_isRegisterMode) {
+      await authViewModel.createUserWithEmailPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+    } else {
+      await authViewModel.signInWithEmailPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+    }
+    _showErrorIfNeeded(authViewModel);
   }
 
   Future<void> _handleGoogleSignIn() async {
-    await _runAuthAction(() async {
-      await _authService.signInWithGoogle();
-    });
+    final authViewModel = context.read<AuthViewModel>();
+    await authViewModel.signInWithGoogle();
+    _showErrorIfNeeded(authViewModel);
+  }
+
+  Future<void> _handleResetPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      _showMessage('Enter a valid email address first.');
+      return;
+    }
+
+    final authViewModel = context.read<AuthViewModel>();
+    await authViewModel.resetPassword(email);
+    if (!mounted) return;
+    if (authViewModel.errorMessage == null) {
+      _showMessage('Password reset email sent.');
+    } else {
+      _showErrorIfNeeded(authViewModel);
+    }
+  }
+
+  void _showErrorIfNeeded(AuthViewModel authViewModel) {
+    if (!mounted || authViewModel.errorMessage == null) return;
+    _showMessage(authViewModel.errorMessage!);
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _toggleMode() {
     setState(() {
       _isRegisterMode = !_isRegisterMode;
-      _error = null;
     });
+    context.read<AuthViewModel>().clearError();
   }
 
   @override
   Widget build(BuildContext context) {
+    final authViewModel = context.watch<AuthViewModel>();
+    final loading = authViewModel.isLoading;
+    final error = authViewModel.errorMessage;
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
@@ -95,7 +105,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.bar_chart_rounded,
                       size: 64,
                       color: AppTheme.primary,
@@ -115,15 +125,15 @@ class _SignInScreenState extends State<SignInScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
-                    if (_error != null) ...[
-                      _ErrorMessage(message: _error!),
+                    if (error != null) ...[
+                      _ErrorMessage(message: error),
                       const SizedBox(height: 16),
                     ],
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       autofillHints: const [AutofillHints.email],
-                      enabled: !_loading,
+                      enabled: !loading,
                       decoration: const InputDecoration(
                         labelText: 'Email',
                         prefixIcon: Icon(Icons.email_outlined),
@@ -142,12 +152,12 @@ class _SignInScreenState extends State<SignInScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       autofillHints: const [AutofillHints.password],
-                      enabled: !_loading,
+                      enabled: !loading,
                       decoration: InputDecoration(
                         labelText: 'Password',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
-                          onPressed: _loading
+                          onPressed: loading
                               ? null
                               : () {
                                   setState(() {
@@ -173,7 +183,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     const SizedBox(height: 20),
                     FilledButton(
-                      onPressed: _loading ? null : _handleEmailPasswordAuth,
+                      onPressed: loading ? null : _handleEmailPasswordAuth,
                       style: FilledButton.styleFrom(
                         backgroundColor: AppTheme.primary,
                         foregroundColor: Colors.white,
@@ -186,8 +196,16 @@ class _SignInScreenState extends State<SignInScreen> {
                           Text(_isRegisterMode ? 'Create account' : 'Sign in'),
                     ),
                     const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: loading ? null : _handleResetPassword,
+                        child: const Text('Forgot password?'),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
                     OutlinedButton.icon(
-                      onPressed: _loading ? null : _handleGoogleSignIn,
+                      onPressed: loading ? null : _handleGoogleSignIn,
                       icon: const Icon(Icons.login, size: 20),
                       label: const Text('Sign in with Google'),
                       style: OutlinedButton.styleFrom(
@@ -201,14 +219,14 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     const SizedBox(height: 12),
                     TextButton(
-                      onPressed: _loading ? null : _toggleMode,
+                      onPressed: loading ? null : _toggleMode,
                       child: Text(
                         _isRegisterMode
                             ? 'Already have an account? Sign in'
                             : 'No account yet? Create one',
                       ),
                     ),
-                    if (_loading) ...[
+                    if (loading) ...[
                       const SizedBox(height: 20),
                       const Center(child: CircularProgressIndicator()),
                     ],
