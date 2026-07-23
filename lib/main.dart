@@ -9,7 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'providers/search_provider.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_navigation_screen.dart';
 import 'screens/sign_in_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
 import 'theme.dart';
@@ -129,7 +129,7 @@ class _AuthorizationGateState extends State<_AuthorizationGate> {
               }
               return const Scaffold(body: Center(child: Text('Account disabled')));
             }
-            return data['role'] == 'ADMIN' ? const AdminDashboardScreen() : const HomeScreen();
+            return data['role'] == 'ADMIN' ? const AdminDashboardScreen() : const MainNavigationScreen();
           },
         );
       },

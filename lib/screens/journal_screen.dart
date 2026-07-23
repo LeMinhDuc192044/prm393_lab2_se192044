@@ -8,8 +8,16 @@ import 'journal_detail_screen.dart';
 
 /// Journals tab — shows journals related to the current search query.
 /// No separate search bar; driven by the shared SearchProvider.
-class JournalScreen extends StatelessWidget {
+class JournalScreen extends StatefulWidget {
   const JournalScreen({super.key});
+
+  @override
+  State<JournalScreen> createState() => _JournalScreenState();
+}
+
+class _JournalScreenState extends State<JournalScreen> {
+  String _filter = '';
+  bool _sortByWorks = true;
 
   @override
   Widget build(BuildContext context) {
@@ -40,10 +48,42 @@ class JournalScreen extends StatelessWidget {
           );
         }
 
-        // Results
+        final journals = provider.journals.where((journal) {
+          final query = _filter.trim().toLowerCase();
+          return query.isEmpty ||
+              journal.displayName.toLowerCase().contains(query) ||
+              (journal.publisherName?.toLowerCase().contains(query) ?? false);
+        }).toList()
+          ..sort((a, b) => _sortByWorks
+              ? b.worksCount.compareTo(a.worksCount)
+              : b.citedByCount.compareTo(a.citedByCount));
+
         return Column(
           children: [
-            // Results count bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Row(children: [
+                Expanded(
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      prefixIcon: Icon(Icons.filter_alt_outlined),
+                      labelText: 'Filter journals',
+                    ),
+                    onChanged: (value) => setState(() => _filter = value),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                DropdownButton<bool>(
+                  value: _sortByWorks,
+                  onChanged: (value) => setState(() => _sortByWorks = value ?? true),
+                  items: const [
+                    DropdownMenuItem(value: true, child: Text('Works')),
+                    DropdownMenuItem(value: false, child: Text('Citations')),
+                  ],
+                ),
+              ]),
+            ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               color: AppTheme.surface,
@@ -54,7 +94,7 @@ class JournalScreen extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      '${provider.journals.length} journals related to "${provider.query}"',
+                       '${journals.length} journals related to "${provider.query}"',
                       style: const TextStyle(
                           fontSize: 13, color: AppTheme.textSecondary),
                     ),
@@ -65,10 +105,10 @@ class JournalScreen extends StatelessWidget {
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
-                itemCount: provider.journals.length,
+                 itemCount: journals.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (_, i) {
-                  final journal = provider.journals[i];
+                   final journal = journals[i];
                   return _JournalCard(
                     journal: journal,
                     onTap: () => Navigator.push(

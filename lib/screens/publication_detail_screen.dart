@@ -6,11 +6,31 @@ import '../services/profile_service.dart';
 import '../theme.dart';
 import '../widgets/common_widgets.dart';
 
-class PublicationDetailScreen extends StatelessWidget {
+class PublicationDetailScreen extends StatefulWidget {
   final Publication publication;
 
   const PublicationDetailScreen({super.key, required this.publication});
+
+  @override
+  State<PublicationDetailScreen> createState() => _PublicationDetailScreenState();
+}
+
+class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
   static final ProfileService _profileService = ProfileService();
+  Publication get publication => widget.publication;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _profileService.recordViewedPublication(
+        uid: user.uid,
+        workId: publication.id,
+        title: publication.title,
+      );
+    }
+  }
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);

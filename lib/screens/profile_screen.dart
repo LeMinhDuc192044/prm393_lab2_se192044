@@ -32,7 +32,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _reload() {
     final user = context.read<AuthViewModel>().currentUser;
     if (user != null) {
-      setState(() => _profileFuture = _profileService.load(user));
+      final future = _profileService.load(user);
+      setState(() {
+        _profileFuture = future;
+      });
     }
   }
 
@@ -57,11 +60,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      _ProfileHeader(user: user),
+                       _ProfileHeader(user: user, snapshot: snapshot.data!),
                       const SizedBox(height: 16),
                       const _SectionTitle(title: 'My Statistics'),
-                      _Statistics(snapshot: snapshot.data!),
-                      const SizedBox(height: 20),
+                       _Statistics(snapshot: snapshot.data!),
+                       const SizedBox(height: 20),
+                       _SearchHistory(items: snapshot.data!.searchHistory),
+                       const SizedBox(height: 20),
                       _Bookmarks(
                         items: snapshot.data!.bookmarks,
                         onRemove: (id) async {
@@ -107,9 +112,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({required this.user});
+  const _ProfileHeader({required this.user, required this.snapshot});
 
   final User user;
+  final ProfileSnapshot snapshot;
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +141,9 @@ class _ProfileHeader extends StatelessWidget {
             Text(user.displayName ?? 'User', style: Theme.of(context).textTheme.titleLarge),
             Text(user.email ?? 'No email'),
             const SizedBox(height: 12),
-            _InfoLine(label: 'Provider', value: provider),
+             _InfoLine(label: 'Provider', value: provider),
+             _InfoLine(label: 'Role', value: snapshot.role),
+             _InfoLine(label: 'Status', value: snapshot.status),
             _InfoLine(label: 'UID', value: user.uid),
             _InfoLine(label: 'Created', value: _formatDate(user.metadata.creationTime)),
             _InfoLine(label: 'Last login', value: _formatDate(user.metadata.lastSignInTime)),
@@ -153,19 +161,20 @@ class _Statistics extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _Stat(label: 'Favorites', value: snapshot.favoriteJournals.length, icon: Icons.favorite),
-            _Stat(label: 'Bookmarks', value: snapshot.bookmarks.length, icon: Icons.bookmark),
-            _Stat(label: 'Collections', value: snapshot.collections.length, icon: Icons.folder),
-            _Stat(label: 'Searches', value: snapshot.totalSearches, icon: Icons.search),
-          ],
-        ),
-      ),
+    return GridView.count(
+      crossAxisCount: MediaQuery.sizeOf(context).width > 700 ? 5 : 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
+      childAspectRatio: 1.5,
+      children: [
+        _Stat(label: 'Favorites', value: snapshot.favoriteJournals.length, icon: Icons.favorite),
+        _Stat(label: 'Bookmarks', value: snapshot.bookmarks.length, icon: Icons.bookmark),
+        _Stat(label: 'Collections', value: snapshot.collections.length, icon: Icons.folder),
+        _Stat(label: 'Searches', value: snapshot.totalSearches, icon: Icons.search),
+        _Stat(label: 'Feedback', value: snapshot.feedbackSubmitted, icon: Icons.feedback_outlined),
+      ],
     );
   }
 }
@@ -213,6 +222,18 @@ class _Favorites extends StatelessWidget {
   Widget build(BuildContext context) => _ItemSection(
         title: 'Favorite Journals',
         icon: Icons.favorite_outline,
+        items: items,
+      );
+}
+
+class _SearchHistory extends StatelessWidget {
+  const _SearchHistory({required this.items});
+  final List<ProfileItem> items;
+
+  @override
+  Widget build(BuildContext context) => _ItemSection(
+        title: 'Recent Search History',
+        icon: Icons.history,
         items: items,
       );
 }
