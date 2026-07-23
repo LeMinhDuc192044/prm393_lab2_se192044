@@ -84,11 +84,10 @@ service cloud.firestore {
     }
 
     match /notifications/{id} {
-      allow read: if isSignedIn()
-        && resource.data.isActive == true
-        && (resource.data.targetRole == null
-          || resource.data.targetRole == 'USER'
-          || (resource.data.targetRole == 'ADMIN' && isAdmin()));
+      allow read: if isAdmin()
+        || (isSignedIn()
+          && resource.data.isActive == true
+          && resource.data.targetRole == 'USER');
       allow write: if isAdmin();
     }
 

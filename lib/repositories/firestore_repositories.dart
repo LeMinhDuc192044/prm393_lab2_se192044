@@ -105,6 +105,7 @@ class NotificationRepository {
   Stream<QuerySnapshot<Map<String, dynamic>>> watchActive() => service
       .collection('notifications')
       .where('isActive', isEqualTo: true)
+      .where('targetRole', isEqualTo: 'USER')
       .orderBy('createdAt', descending: true)
       .snapshots();
 }
