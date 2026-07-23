@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/publication.dart';
 import '../models/journal.dart';
@@ -5,6 +6,7 @@ import '../models/search_filter.dart';
 import '../services/openalex_service.dart';
 import '../services/analytics_service.dart';
 import '../services/journal_service.dart';
+import '../services/profile_service.dart';
 
 enum SearchStatus { idle, loading, success, error }
 
@@ -12,6 +14,7 @@ class SearchProvider extends ChangeNotifier {
   final OpenAlexService _apiService = OpenAlexService();
   final AnalyticsService _analytics = AnalyticsService();
   final JournalService _journalService = JournalService();
+  final ProfileService _profileService = ProfileService();
 
   SearchStatus _status = SearchStatus.idle;
   String _query = '';
@@ -160,7 +163,19 @@ class SearchProvider extends ChangeNotifier {
       _fetchPublications(),
       _fetchJournals(),
     ]);
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      _recordSearch(uid);
+    }
     notifyListeners();
+  }
+
+  Future<void> _recordSearch(String uid) async {
+    try {
+      await _profileService.recordSearch(uid);
+    } catch (e) {
+      debugPrint('SearchProvider: unable to record search: $e');
+    }
   }
 
   Future<void> _fetchPublications() async {

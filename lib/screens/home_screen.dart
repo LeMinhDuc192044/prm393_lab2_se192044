@@ -9,6 +9,7 @@ import 'publication_detail_screen.dart';
 import 'trend_analysis_screen.dart';
 import 'dashboard_screen.dart';
 import 'journal_screen.dart';
+import 'profile_screen.dart';
 
 /// Single-screen Home with a persistent search bar at the top and a
 /// TabBar below it that switches between Search / Trends / Dashboard
@@ -59,6 +60,13 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: AppBar(
           title: const Text('Journal Trend Analyzer'),
           actions: [
+            IconButton(
+              tooltip: 'Profile',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              ),
+              icon: const Icon(Icons.account_circle_outlined),
+            ),
             IconButton(
               tooltip: 'Sign out',
               onPressed: () => context.read<AuthViewModel>().signOut(),
