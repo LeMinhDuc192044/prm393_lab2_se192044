@@ -16,6 +16,9 @@ class AuthRepository {
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchUserProfile(String uid) =>
       _authService.watchUserProfile(uid);
 
+  Future<void> ensureUserProfile(User user) =>
+      _authService.ensureUserProfile(user);
+
   Future<User?> signInWithEmailPassword({
     required String email,
     required String password,

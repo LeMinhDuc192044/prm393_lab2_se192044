@@ -59,7 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       _ProfileHeader(user: user),
                       const SizedBox(height: 16),
-                      _SectionTitle(title: 'My Statistics'),
+                      const _SectionTitle(title: 'My Statistics'),
                       _Statistics(snapshot: snapshot.data!),
                       const SizedBox(height: 20),
                       _Bookmarks(

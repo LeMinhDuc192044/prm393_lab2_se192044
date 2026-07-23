@@ -7,7 +7,7 @@ class AdminService {
   final FirebaseFirestore _firestore;
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchUsers() =>
-      _firestore.collection('users').orderBy('createdAt', descending: true).snapshots();
+      _firestore.collection('users').snapshots();
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchFeedback() =>
       _firestore.collection('feedback').orderBy('createdAt', descending: true).snapshots();
@@ -17,6 +17,9 @@ class AdminService {
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchNotifications() =>
       _firestore.collection('notifications').orderBy('createdAt', descending: true).snapshots();
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchUserCollection(String uid, String name) =>
+      _firestore.collection('users').doc(uid).collection(name).snapshots();
 
   Future<void> updateUserRole(String uid, String role) =>
       _firestore.collection('users').doc(uid).update({

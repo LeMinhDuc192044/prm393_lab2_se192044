@@ -4,8 +4,6 @@ import 'package:flutter/foundation.dart'
     show TargetPlatform, debugPrint, defaultTargetPlatform, kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 
-import '../models/user_model.dart';
-
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -52,6 +50,10 @@ class AuthService {
 
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchUserProfile(String uid) =>
       _firestore.collection('users').doc(uid).snapshots();
+
+  Future<void> ensureUserProfile(User user) async {
+    await _saveUserProfile(user, _providerFor(user));
+  }
 
   Future<User?> signInWithEmailPassword({
     required String email,
@@ -172,21 +174,48 @@ class AuthService {
     if (user == null) return;
 
     final reference = _firestore.collection('users').doc(user.uid);
-    final existing = await reference.get();
-    final profile = UserModel(
-      uid: user.uid,
-      email: user.email ?? '',
-      displayName: user.displayName,
-      photoUrl: user.photoURL,
-      provider: provider,
-    );
-    await reference.set(
-      profile.toMap(
-        includeCreatedAt: !existing.exists,
-        includeDefaults: !existing.exists,
-      ),
-      SetOptions(merge: true),
-    );
+    await _firestore.runTransaction((transaction) async {
+      final existing = await transaction.get(reference);
+      final data = <String, dynamic>{
+        'uid': user.uid,
+        'email': user.email ?? '',
+        'displayName': user.displayName,
+        'photoURL': user.photoURL,
+        'provider': provider,
+        'lastLogin': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      if (!existing.exists) {
+        data.addAll({
+          'role': 'USER',
+          'status': 'ACTIVE',
+          'favoriteCount': 0,
+          'bookmarkCount': 0,
+          'searchCount': 0,
+          'totalSearches': 0,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        final existingData = existing.data() ?? const <String, dynamic>{};
+        if (!existingData.containsKey('role')) data['role'] = 'USER';
+        if (!existingData.containsKey('status')) data['status'] = 'ACTIVE';
+        if (!existingData.containsKey('createdAt')) {
+          data['createdAt'] = FieldValue.serverTimestamp();
+        }
+        if (!existingData.containsKey('favoriteCount')) data['favoriteCount'] = 0;
+        if (!existingData.containsKey('bookmarkCount')) data['bookmarkCount'] = 0;
+        if (!existingData.containsKey('searchCount')) data['searchCount'] = 0;
+        if (!existingData.containsKey('totalSearches')) data['totalSearches'] = 0;
+      }
+      transaction.set(reference, data, SetOptions(merge: true));
+    });
+  }
+
+  String _providerFor(User user) {
+    final provider = user.providerData
+        .map((item) => item.providerId)
+        .firstWhere((item) => item != 'firebase', orElse: () => 'password');
+    return provider == 'google.com' ? 'google.com' : 'password';
   }
 
   String _friendlyAuthError(String code) {

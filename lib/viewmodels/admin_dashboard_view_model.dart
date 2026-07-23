@@ -16,12 +16,16 @@ class AdminDashboardViewModel extends ChangeNotifier {
   Stream<QuerySnapshot<Map<String, dynamic>>> get feedback => _repository.watchFeedback();
   Stream<QuerySnapshot<Map<String, dynamic>>> get reports => _repository.watchReports();
   Stream<QuerySnapshot<Map<String, dynamic>>> get notifications => _repository.watchNotifications();
+  Stream<QuerySnapshot<Map<String, dynamic>>> userCollection(String uid, String name) => _repository.watchUserCollection(uid, name);
 
   Future<void> updateRole(String uid, String role) => _run(() => _repository.updateUserRole(uid, role));
   Future<void> updateStatus(String uid, String status) => _run(() => _repository.updateUserStatus(uid, status));
   Future<void> updateFeedback(String id, String status) => _run(() => _repository.updateFeedbackStatus(id, status));
   Future<void> updateReport(String id, String status) => _run(() => _repository.updateReportStatus(id, status));
   Future<void> deleteFeedback(String id) => _run(() => _repository.deleteFeedback(id));
+  Future<void> createNotification(Map<String, dynamic> data) => _run(() => _repository.createNotification(data));
+  Future<void> updateNotification(String id, Map<String, dynamic> data) => _run(() => _repository.updateNotification(id, data));
+  Future<void> deleteNotification(String id) => _run(() => _repository.deleteNotification(id));
 
   Future<void> _run(Future<void> Function() action) async {
     loading = true;

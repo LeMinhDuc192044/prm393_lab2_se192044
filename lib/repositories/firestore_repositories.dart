@@ -25,7 +25,8 @@ abstract class UserSubcollectionRepository {
 }
 
 class UserRepository {
-  UserRepository(this.uid, [this.service = FirestoreService.instance]);
+  UserRepository(this.uid, [FirestoreService? service])
+      : service = service ?? FirestoreService.instance;
   final String uid;
   final FirestoreService service;
 
@@ -96,7 +97,8 @@ class SettingsRepository extends UserSubcollectionRepository {
 }
 
 class NotificationRepository {
-  NotificationRepository(this.uid, [this.service = FirestoreService.instance]);
+  NotificationRepository(this.uid, [FirestoreService? service])
+      : service = service ?? FirestoreService.instance;
   final String uid;
   final FirestoreService service;
 
@@ -108,7 +110,8 @@ class NotificationRepository {
 }
 
 class FeedbackRepository {
-  FeedbackRepository(this.uid, [this.service = FirestoreService.instance]);
+  FeedbackRepository(this.uid, [FirestoreService? service])
+      : service = service ?? FirestoreService.instance;
   final String uid;
   final FirestoreService service;
 
@@ -117,7 +120,8 @@ class FeedbackRepository {
 }
 
 class ReportRepository {
-  ReportRepository(this.uid, [this.service = FirestoreService.instance]);
+  ReportRepository(this.uid, [FirestoreService? service])
+      : service = service ?? FirestoreService.instance;
   final String uid;
   final FirestoreService service;
 

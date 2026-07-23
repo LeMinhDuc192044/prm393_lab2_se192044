@@ -152,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   'Provider: $provider  |  UID: ${user.uid}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
                     color: AppTheme.textSecondary,
                   ),

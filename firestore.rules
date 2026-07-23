@@ -2,87 +2,109 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
-    function owner(uid) { return signedIn() && request.auth.uid == uid; }
-    function admin() {
-      return signedIn()
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function isAdmin() {
+      return isSignedIn()
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN'
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'ACTIVE';
     }
 
     match /users/{uid} {
-      allow read: if owner(uid) || admin();
-      allow create: if owner(uid)
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid)
         && request.resource.data.uid == uid
         && request.resource.data.role == 'USER'
-        && request.resource.data.status == 'ACTIVE';
-      allow update: if admin()
-        && request.resource.data.uid == resource.data.uid;
-      allow update: if owner(uid)
-        && request.resource.data.uid == resource.data.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'email', 'displayName', 'photoURL', 'provider', 'lastLogin',
-          'updatedAt', 'favoriteCount', 'bookmarkCount', 'searchCount',
-          'totalSearches', 'lastSearch'
+        && request.resource.data.status == 'ACTIVE'
+        && request.resource.data.keys().hasAll([
+          'uid', 'email', 'displayName', 'photoURL', 'provider',
+          'role', 'status', 'createdAt', 'updatedAt', 'lastLogin'
         ]);
-      allow delete: if admin();
+      allow update: if isAdmin()
+        && uid != request.auth.uid
+        && request.resource.data.uid == resource.data.uid;
+      allow update: if isOwner(uid)
+        && (!resource.data.keys().hasAny(['uid'])
+          && request.resource.data.uid == uid
+          || resource.data.keys().hasAny(['uid'])
+          && request.resource.data.uid == resource.data.uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'uid', 'email', 'displayName', 'photoURL', 'provider', 'lastLogin',
+          'updatedAt', 'createdAt', 'role', 'status',
+          'favoriteCount', 'bookmarkCount', 'searchCount',
+          'totalSearches', 'lastSearch'
+        ])
+        && (!resource.data.keys().hasAny(['role'])
+          && request.resource.data.role == 'USER'
+          || resource.data.keys().hasAny(['role'])
+          && request.resource.data.role == resource.data.role)
+        && (!resource.data.keys().hasAny(['status'])
+          && request.resource.data.status == 'ACTIVE'
+          || resource.data.keys().hasAny(['status'])
+          && request.resource.data.status == resource.data.status)
+        && (!resource.data.keys().hasAny(['createdAt'])
+          && request.resource.data.createdAt == request.time
+          || resource.data.keys().hasAny(['createdAt'])
+          && request.resource.data.createdAt == resource.data.createdAt)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastLogin'])
+          || request.resource.data.lastLogin == request.time)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['updatedAt'])
+          || request.resource.data.updatedAt == request.time);
+      allow delete: if isAdmin() && uid != request.auth.uid;
 
       match /bookmarks/{id} {
-        allow read, write: if owner(uid) || admin();
+        allow read, write: if isOwner(uid) || isAdmin();
       }
       match /favorite_journals/{id} {
-        allow read, write: if owner(uid) || admin();
-      }
-      match /favorites/{id} {
-        allow read, write: if owner(uid) || admin();
+        allow read, write: if isOwner(uid) || isAdmin();
       }
       match /collections/{id} {
-        allow read, write: if owner(uid) || admin();
+        allow read, write: if isOwner(uid) || isAdmin();
       }
       match /collection_items/{id} {
-        allow read, write: if owner(uid) || admin();
+        allow read, write: if isOwner(uid) || isAdmin();
       }
       match /search_history/{id} {
-        allow read, write: if owner(uid) || admin();
+        allow read, write: if isOwner(uid) || isAdmin();
       }
       match /activity_logs/{id} {
-        allow read: if owner(uid) || admin();
-        allow create: if owner(uid) || admin();
-        allow update, delete: if admin();
+        allow read: if isOwner(uid) || isAdmin();
+        allow create: if isOwner(uid) || isAdmin();
+        allow update, delete: if isAdmin();
       }
       match /settings/{id} {
-        allow read: if owner(uid) || admin();
-        allow create, update: if (owner(uid) || admin())
+        allow read: if isOwner(uid) || isAdmin();
+        allow create, update: if (isOwner(uid) || isAdmin())
           && request.resource.data.keys().hasOnly([
             'darkMode', 'language', 'notifications',
             'notificationEnabled', 'recommendationEnabled', 'theme'
           ]);
-        allow delete: if admin();
+        allow delete: if isAdmin();
       }
     }
 
     match /notifications/{id} {
-      allow read: if signedIn()
+      allow read: if isSignedIn()
         && resource.data.isActive == true
         && (resource.data.targetRole == null
           || resource.data.targetRole == 'USER'
-          || (resource.data.targetRole == 'ADMIN' && admin()));
-      allow write: if admin();
+          || (resource.data.targetRole == 'ADMIN' && isAdmin()));
+      allow write: if isAdmin();
     }
 
     match /feedback/{id} {
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
-      allow read, update, delete: if admin();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read, update, delete: if isAdmin();
     }
 
     match /reports/{id} {
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
-      allow read, update, delete: if admin();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read, update, delete: if isAdmin();
     }
 
     match /app_config/{id} {
-      allow read: if signedIn();
-      allow write: if admin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     match /{document=**} {

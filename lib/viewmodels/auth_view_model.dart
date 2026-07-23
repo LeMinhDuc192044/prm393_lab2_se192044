@@ -21,6 +21,9 @@ class AuthViewModel extends ChangeNotifier {
 
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchUserProfile(String uid) =>
       _authRepository.watchUserProfile(uid);
+
+  Future<void> ensureUserProfile(User user) =>
+      _authRepository.ensureUserProfile(user);
   Future<User?> signInWithEmailPassword({
     required String email,
     required String password,

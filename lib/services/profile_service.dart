@@ -41,7 +41,7 @@ class ProfileService {
     final userReference = _firestore.collection('users').doc(user.uid);
     final results = await Future.wait([
       userReference.collection('bookmarks').get(),
-      userReference.collection('favorites').get(),
+      userReference.collection('favorite_journals').get(),
       userReference.collection('collections').get(),
       userReference.get(),
       userReference.collection('settings').doc('preferences').get(),
@@ -80,6 +80,30 @@ class ProfileService {
         .delete();
   }
 
+  Stream<DocumentSnapshot<Map<String, dynamic>>> bookmarkStream(String uid, String workId) =>
+      _firestore.collection('users').doc(uid).collection('bookmarks').doc(_docId(workId)).snapshots();
+
+  Future<void> toggleBookmark({required String uid, required String workId, required Map<String, dynamic> data}) async {
+    final reference = _firestore.collection('users').doc(uid).collection('bookmarks').doc(_docId(workId));
+    if ((await reference.get()).exists) {
+      await reference.delete();
+    } else {
+      await reference.set({...data, 'workId': workId, 'addedAt': FieldValue.serverTimestamp()});
+    }
+  }
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>> favoriteJournalStream(String uid, String journalId) =>
+      _firestore.collection('users').doc(uid).collection('favorite_journals').doc(_docId(journalId)).snapshots();
+
+  Future<void> toggleFavoriteJournal({required String uid, required String journalId, required Map<String, dynamic> data}) async {
+    final reference = _firestore.collection('users').doc(uid).collection('favorite_journals').doc(_docId(journalId));
+    if ((await reference.get()).exists) {
+      await reference.delete();
+    } else {
+      await reference.set({...data, 'journalId': journalId, 'createdAt': FieldValue.serverTimestamp()});
+    }
+  }
+
   Future<void> recordSearch(String uid) {
     return _firestore.collection('users').doc(uid).set({
       'totalSearches': FieldValue.increment(1),
@@ -93,4 +117,6 @@ class ProfileService {
         .map((document) => ProfileItem(id: document.id, data: document.data()))
         .toList();
   }
+
+  String _docId(String id) => id.split('/').last.replaceAll('/', '_');
 }

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'providers/search_provider.dart';
 import 'screens/home_screen.dart';
@@ -83,34 +84,54 @@ class _AuthorizationGate extends StatefulWidget {
 
 class _AuthorizationGateState extends State<_AuthorizationGate> {
   bool _handledDisabled = false;
+  late Future<void> _profileMigration;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileMigration = context.read<AuthViewModel>().ensureUserProfile(widget.user);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: context.read<AuthViewModel>().watchUserProfile(widget.user.uid),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-        final data = snapshot.data!.data() ?? const <String, dynamic>{};
-        if (data['status'] == 'DISABLED') {
-          if (!_handledDisabled) {
-            _handledDisabled = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) async {
-              if (!mounted) return;
-              await showDialog<void>(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => AlertDialog(
-                  title: const Text('Account disabled'),
-                  content: const Text('Your account has been disabled.'),
-                  actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
-                ),
-              );
-              await context.read<AuthViewModel>().signOut();
-            });
-          }
-          return const Scaffold(body: Center(child: Text('Account disabled')));
+    return FutureBuilder<void>(
+      future: _profileMigration,
+      builder: (context, migrationSnapshot) {
+        if (migrationSnapshot.hasError) {
+          return const Scaffold(body: Center(child: Text('Unable to load account profile.')));
         }
-        return data['role'] == 'ADMIN' ? const AdminDashboardScreen() : const HomeScreen();
+        if (migrationSnapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: context.read<AuthViewModel>().watchUserProfile(widget.user.uid),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            final data = snapshot.data!.data() ?? const <String, dynamic>{};
+            if (data['status'] == 'DISABLED') {
+              if (!_handledDisabled) {
+                _handledDisabled = true;
+                WidgetsBinding.instance.addPostFrameCallback((_) async {
+                  if (!mounted) return;
+                  final authViewModel = context.read<AuthViewModel>();
+                  await showDialog<void>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Account disabled'),
+                      content: const Text('Your account has been disabled.'),
+                      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+                    ),
+                  );
+                  if (!mounted) return;
+                  await authViewModel.signOut();
+                });
+              }
+              return const Scaffold(body: Center(child: Text('Account disabled')));
+            }
+            return data['role'] == 'ADMIN' ? const AdminDashboardScreen() : const HomeScreen();
+          },
+        );
       },
     );
   }

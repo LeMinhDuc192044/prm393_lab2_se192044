@@ -10,6 +10,7 @@ class AdminRepository {
   Stream<QuerySnapshot<Map<String, dynamic>>> watchFeedback() => _service.watchFeedback();
   Stream<QuerySnapshot<Map<String, dynamic>>> watchReports() => _service.watchReports();
   Stream<QuerySnapshot<Map<String, dynamic>>> watchNotifications() => _service.watchNotifications();
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchUserCollection(String uid, String name) => _service.watchUserCollection(uid, name);
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchConfig() => _service.watchConfig();
   Future<void> updateUserRole(String uid, String role) => _service.updateUserRole(uid, role);
   Future<void> updateUserStatus(String uid, String status) => _service.updateUserStatus(uid, status);
