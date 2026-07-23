@@ -53,7 +53,13 @@ service cloud.firestore {
       allow delete: if isAdmin() && uid != request.auth.uid;
 
       match /bookmarks/{id} {
-        allow read, write: if isOwner(uid) || isAdmin();
+        allow read: if isOwner(uid) || isAdmin();
+        allow create, update: if isAdmin()
+          || (isOwner(uid)
+            && request.resource.data.keys().hasAll(['workId', 'title', 'addedAt'])
+            && request.resource.data.workId is string
+            && request.resource.data.title is string);
+        allow delete: if isOwner(uid) || isAdmin();
       }
       match /favorite_journals/{id} {
         allow read, write: if isOwner(uid) || isAdmin();

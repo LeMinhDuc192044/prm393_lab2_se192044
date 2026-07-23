@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/publication.dart';
 import '../services/profile_service.dart';
@@ -54,16 +55,23 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
                   tooltip: saved ? 'Remove bookmark' : 'Bookmark',
                   icon: Icon(saved ? Icons.bookmark : Icons.bookmark_border),
                   onPressed: () async {
-                    await _profileService.toggleBookmark(
-                      uid: FirebaseAuth.instance.currentUser!.uid,
-                      workId: publication.id,
-                      data: {
-                        'title': publication.title,
-                        'authors': publication.authors.map((author) => author.name).join(', '),
-                        'journal': publication.journalName ?? '',
-                        'year': publication.year,
-                      },
-                    );
+                    try {
+                      await _profileService.toggleBookmark(
+                        uid: FirebaseAuth.instance.currentUser!.uid,
+                        workId: publication.id,
+                        data: {
+                          'title': publication.title,
+                          'authors': publication.authors.map((author) => author.name).join(', '),
+                          'journal': publication.journalName ?? '',
+                          'year': publication.year,
+                        },
+                      );
+                    } on FirebaseException catch (error) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Bookmark failed: ${error.message ?? error.code}')),
+                      );
+                    }
                   },
                 );
               },

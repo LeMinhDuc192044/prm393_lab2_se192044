@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -70,8 +71,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _Bookmarks(
                         items: snapshot.data!.bookmarks,
                         onRemove: (id) async {
-                          await _profileService.removeBookmark(user.uid, id);
-                          _reload();
+                          try {
+                            await _profileService.removeBookmark(user.uid, id);
+                            if (mounted) _reload();
+                          } on FirebaseException catch (error) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Unable to remove bookmark: ${error.message ?? error.code}')),
+                            );
+                          }
                         },
                       ),
                       const SizedBox(height: 20),

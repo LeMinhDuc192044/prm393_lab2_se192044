@@ -57,14 +57,12 @@ class ProfileService {
       userReference.collection('settings').doc('preferences').get(),
       userReference.collection('search_history').orderBy('searchedAt', descending: true).limit(5).get(),
       userReference.collection('activity_logs').orderBy('timestamp', descending: true).limit(10).get(),
-      _firestore.collection('feedback').where('uid', isEqualTo: user.uid).get(),
     ]);
 
     final profile = results[3] as DocumentSnapshot<Map<String, dynamic>>;
     final settings = results[4] as DocumentSnapshot<Map<String, dynamic>>;
     final searchHistory = results[5] as QuerySnapshot<Map<String, dynamic>>;
     final activity = results[6] as QuerySnapshot<Map<String, dynamic>>;
-    final feedback = results[7] as QuerySnapshot<Map<String, dynamic>>;
     final profileData = profile.data() ?? const <String, dynamic>{};
     final settingsData = settings.data() ?? const <String, dynamic>{};
 
@@ -77,7 +75,7 @@ class ProfileService {
           .where((item) => item.data['action'] == 'view_publication')
           .toList(),
       totalSearches: (profileData['totalSearches'] as num?)?.toInt() ?? 0,
-      feedbackSubmitted: feedback.size,
+      feedbackSubmitted: await _feedbackCount(user.uid),
       role: profileData['role'] as String? ?? 'USER',
       status: profileData['status'] as String? ?? 'ACTIVE',
       darkMode: settingsData['darkMode'] as bool? ?? false,
@@ -108,11 +106,18 @@ class ProfileService {
 
   Future<void> toggleBookmark({required String uid, required String workId, required Map<String, dynamic> data}) async {
     final reference = _firestore.collection('users').doc(uid).collection('bookmarks').doc(_docId(workId));
-    if ((await reference.get()).exists) {
-      await reference.delete();
-    } else {
-      await reference.set({...data, 'workId': workId, 'addedAt': FieldValue.serverTimestamp()});
-    }
+    await _firestore.runTransaction((transaction) async {
+      final existing = await transaction.get(reference);
+      if (existing.exists) {
+        transaction.delete(reference);
+      } else {
+        transaction.set(reference, {
+          ...data,
+          'workId': workId,
+          'addedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    });
   }
 
   Stream<DocumentSnapshot<Map<String, dynamic>>> favoriteJournalStream(String uid, String journalId) =>
@@ -148,6 +153,19 @@ class ProfileService {
     return snapshot.docs
         .map((document) => ProfileItem(id: document.id, data: document.data()))
         .toList();
+  }
+
+  Future<int> _feedbackCount(String uid) async {
+    try {
+      final snapshot = await _firestore
+          .collection('feedback')
+          .where('uid', isEqualTo: uid)
+          .get();
+      return snapshot.size;
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied') return 0;
+      rethrow;
+    }
   }
 
   String _docId(String id) => id.split('/').last.replaceAll('/', '_');
